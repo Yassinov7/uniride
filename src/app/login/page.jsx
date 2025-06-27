@@ -1,71 +1,64 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { useUserStore } from '@/store/userStore';
+import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 
-export default function LoginPage() {
-  const router = useRouter();
-  const setUser = useUserStore((s) => s.setUser);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+export default function Login() {
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
+    const handleLogin = async () => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+            toast.error(error.message);
+        } else {
+            router.push('/auth-redirect');
+        }
+    };
 
-    if (error) return setError(error.message);
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <Toaster position="top-center" />
+            <div className="p-8 bg-white rounded-lg shadow-lg w-full max-w-md">
+                <h1 className="text-2xl font-bold text-center mb-4 text-blue-600">تسجيل الدخول</h1>
 
-    setUser(data.user);
-    router.push('/student/rides');
-  };
+                <input
+                    type="email"
+                    placeholder="البريد الإلكتروني"
+                    className="w-full border rounded p-2 mb-4"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
 
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 md:p-8 rounded-xl shadow-md w-full max-w-md space-y-5 border border-gray-200"
-      >
-        <h2 className="text-2xl font-bold text-blue-700 text-center">تسجيل الدخول</h2>
+                <input
+                    type="password"
+                    placeholder="كلمة المرور"
+                    className="w-full border rounded p-2 mb-4"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
 
-        <input
-          type="email"
-          placeholder="البريد الإلكتروني"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-          required
-        />
+                <button
+                    onClick={handleLogin}
+                    className="bg-blue-600 text-white rounded w-full p-2 mb-4"
+                >
+                    دخول
+                </button>
 
-        <input
-          type="password"
-          placeholder="كلمة المرور"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-          required
-        />
-
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded font-semibold transition"
-        >
-          دخول
-        </button>
-
-        <p className="text-sm text-center text-gray-600">
-          ليس لديك حساب؟{' '}
-          <a href="/register" className="text-blue-700 hover:underline">
-            إنشاء حساب
-          </a>
-        </p>
-      </form>
-    </main>
-  );
+                <div className="flex justify-between text-sm">
+                    <Link href="/register" className="text-orange-500 underline">
+                        إنشاء حساب جديد
+                    </Link>
+                    <Link href="/" className="text-gray-500 underline">
+                        العودة للرئيسية
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 }

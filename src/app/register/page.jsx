@@ -1,87 +1,65 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [error, setError] = useState('');
+export default function Register() {
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+    const handleRegister = async () => {
+        const { error } = await supabase.auth.signUp({ email, password });
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
+        if (error) {
+            toast.error(error.message);
+        } else {
+            toast.success('تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني!');
+            router.push('/auth/login');
+        }
+    };
 
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: { name: form.name },
-      },
-    });
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <Toaster position="top-center" />
+            <div className="p-8 bg-white rounded-lg shadow-lg w-full max-w-md">
+                <h1 className="text-2xl font-bold text-center mb-4 text-orange-500">إنشاء حساب جديد</h1>
 
-    if (error) return setError(error.message);
+                <input
+                    type="email"
+                    placeholder="البريد الإلكتروني"
+                    className="w-full border rounded p-2 mb-4"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
 
-    router.push('/login');
-  };
+                <input
+                    type="password"
+                    placeholder="كلمة المرور"
+                    className="w-full border rounded p-2 mb-4"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
 
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form
-        onSubmit={handleRegister}
-        className="bg-white p-6 md:p-8 rounded-xl shadow-md w-full max-w-md space-y-5 border border-gray-200"
-      >
-        <h2 className="text-2xl font-bold text-blue-700 text-center">إنشاء حساب جديد</h2>
+                <button
+                    onClick={handleRegister}
+                    className="bg-orange-500 text-white rounded w-full p-2 mb-4"
+                >
+                    إنشاء حساب
+                </button>
 
-        <input
-          name="name"
-          type="text"
-          placeholder="الاسم الكامل"
-          value={form.name}
-          onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-          required
-        />
-
-        <input
-          name="email"
-          type="email"
-          placeholder="البريد الإلكتروني"
-          value={form.email}
-          onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-          required
-        />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="كلمة المرور"
-          value={form.password}
-          onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-          required
-        />
-
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded font-semibold transition"
-        >
-          تسجيل
-        </button>
-
-        <p className="text-sm text-center text-gray-600">
-          لديك حساب؟{' '}
-          <a href="/login" className="text-blue-700 hover:underline">
-            تسجيل الدخول
-          </a>
-        </p>
-      </form>
-    </main>
-  );
+                <div className="flex justify-between text-sm">
+                    <Link href="/login" className="text-blue-500 underline">
+                        لديك حساب؟ تسجيل دخول
+                    </Link>
+                    <Link href="/" className="text-gray-500 underline">
+                        العودة للرئيسية
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 }
