@@ -11,12 +11,14 @@ import {
     Users,
     FileDown,
     LayoutDashboard,
+    HomeIcon
 } from 'lucide-react';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
     { name: 'الجامعات', href: '/admin/universities', icon: <University size={18} /> },
     { name: 'الباصات', href: '/admin/buses', icon: <Bus size={18} /> },
+    { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={18} /> },
     { name: 'الرحلات', href: '/admin/routes', icon: <Route size={18} /> },
     { name: 'توزيع الطلاب', href: '/admin/assign', icon: <Users size={18} /> },
     { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={18} /> },
