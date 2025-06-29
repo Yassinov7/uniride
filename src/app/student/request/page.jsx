@@ -153,7 +153,8 @@ export default function RideRequestPage() {
                         <p className="font-medium text-sm mt-4">اختر الأيام المطلوبة من نفس الأسبوع:</p>
                         <div className="grid grid-cols-2 gap-2">
                             {weekdays.map((name, i) => {
-                                const date = dayjs(startDate).startOf('week').add(5 + i, 'day');
+                                const base = getStartFriday(startDate);
+                                const date = base.add(i, 'day');
                                 return (
                                     <label key={i} className="flex items-center gap-2">
                                         <input
@@ -165,6 +166,7 @@ export default function RideRequestPage() {
                                     </label>
                                 );
                             })}
+
                         </div>
                     </>
                 )}
