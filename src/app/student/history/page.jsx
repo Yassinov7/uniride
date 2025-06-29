@@ -1,85 +1,98 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import toast from 'react-hot-toast';
+import { Bus, Clock, CalendarDays, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
 
-export default function BookingHistoryPage() {
-    const [history, setHistory] = useState([]);
-    const [loading, setLoading] = useState(true);
+dayjs.locale('ar');
+
+export default function StudentRidesPage() {
+    const [rides, setRides] = useState([]);
 
     useEffect(() => {
-        fetchHistory();
+        fetchRides();
     }, []);
 
-    const fetchHistory = async () => {
-        const { data: userData } = await supabase.auth.getUser();
-        const studentId = userData?.user?.id;
+    const fetchRides = async () => {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
 
-        if (!studentId) {
-            toast.error('لم يتم التعرف على المستخدم');
-            return;
-        }
-
-        const { data, error } = await supabase
-            .from('bookings')
+        const { data } = await supabase
+            .from('ride_students')
             .select(`
-                id, note,
-                ride_id (
-                    date, time, route_type
-                )
-            `)
-            .eq('student_id', studentId)
-            .order('ride_id.date', { ascending: false });
+        ride:ride_id (
+          date,
+          time,
+          route_type,
+          buses(name)
+        )
+      `)
+            .eq('student_id', user.id);
 
-        if (error) {
-            console.error(error);
-            toast.error('فشل تحميل السجل');
-        } else {
-            const filtered = data.filter(b => b.ride_id?.date && b.ride_id?.time);
-            setHistory(filtered);
-        }
+        if (!data) return;
 
-        setLoading(false);
+        const sorted = data
+            .map((r) => ({
+                ...r.ride,
+                datetime: dayjs(`${r.ride.date} ${r.ride.time}`),
+            }))
+            .sort((a, b) => b.datetime - a.datetime);
+
+        setRides(sorted);
     };
 
     return (
-        <div className="max-w-4xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
-            <h1 className="text-xl font-bold text-blue-600 text-center mb-6">سجل الرحلات</h1>
+        <div className="max-w-4xl mx-auto p-4 space-y-6 text-right" dir="rtl">
+            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+                <RefreshCw size={20} /> سجل رحلاتي
+            </h1>
 
-            {loading ? (
-                <p className="text-center text-gray-500">جاري التحميل...</p>
-            ) : history.length === 0 ? (
-                <p className="text-center text-gray-500">لا يوجد سجل للرحلات حتى الآن.</p>
+            {rides.length === 0 ? (
+                <p className="text-center text-gray-600 mt-6">لا يوجد رحلات حتى الآن.</p>
             ) : (
-                <div className="overflow-x-auto bg-white rounded-lg shadow border">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead className="bg-gray-50 text-gray-700">
+                <div className="overflow-x-auto border rounded">
+                    <table className="min-w-full text-sm text-right">
+                        <thead className="bg-blue-100 text-blue-800">
                             <tr>
-                                <th scope="col" className="px-4 py-3 whitespace-nowrap">التاريخ</th>
-                                <th scope="col" className="px-4 py-3 whitespace-nowrap">الوقت</th>
-                                <th scope="col" className="px-4 py-3 whitespace-nowrap">النوع</th>
-                                {/* <th scope="col" className="px-4 py-3 whitespace-nowrap">ملاحظات</th> */}
+                                <th className="p-2">التاريخ</th>
+                                <th className="p-2 hidden sm:table-cell">الساعة</th>
+                                <th className="p-2 hidden sm:table-cell">نوع الرحلة</th>
+                                <th className="p-2">الباص</th>
+                                <th className="p-2">الحالة</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-100 text-center">
-                            {history.map(b => (
-                                <tr key={b.id}>
-                                    <td className="px-4 py-3 whitespace-nowrap">
-                                        {dayjs(b.ride_id.date).format('YYYY-MM-DD')}
-                                    </td>
-                                    <td className="px-4 py-3 whitespace-nowrap">
-                                        {dayjs(`${b.ride_id.date}T${b.ride_id.time}`).format('hh:mm A')}
-                                    </td>
-                                    <td className="px-4 py-3 whitespace-nowrap">
-                                        {b.ride_id.route_type === 'go' ? 'ذهاب' : 'عودة'}
-                                    </td>
-                                    {/* <td className="px-4 py-3 whitespace-nowrap text-gray-600">
-                                        {b.note || '-'}
-                                    </td> */}
-                                </tr>
-                            ))}
+                        <tbody>
+                            {rides.map((ride, idx) => {
+                                const now = dayjs();
+                                const rideDateTime = ride.datetime;
+                                const status = rideDateTime.isAfter(now) ? 'قادمة' : 'منتهية';
+
+                                return (
+                                    <tr key={idx} className="border-b hover:bg-blue-50">
+                                        <td className="p-2 font-medium">
+                                            {dayjs(ride.date).format('dddd - YYYY/MM/DD')}
+                                        </td>
+                                        <td className="p-2 hidden sm:table-cell">{ride.time}</td>
+                                        <td className="p-2 hidden sm:table-cell">
+                                            {ride.route_type === 'go' ? 'ذهاب' : 'عودة'}
+                                        </td>
+                                        <td className="p-2">{ride.buses?.name || '—'}</td>
+                                        <td className="p-2">
+                                            <span
+                                                className={
+                                                    status === 'قادمة'
+                                                        ? 'text-green-600 font-semibold'
+                                                        : 'text-gray-500'
+                                                }
+                                            >
+                                                {status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

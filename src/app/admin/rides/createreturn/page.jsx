@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CalendarDays, Bus, Clock, Share2 } from 'lucide-react';
+import { Bus, Clock, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
@@ -17,17 +17,27 @@ export default function CreateReturnRidePage() {
     const [time, setTime] = useState('13:30');
     const [loading, setLoading] = useState(false);
 
+    // تعيين تاريخ اليوم تلقائيًا
     useEffect(() => {
+        const today = dayjs().format('YYYY-MM-DD');
+        setDate(today);
+    }, []);
+
+    // جلب الباصات مرة واحدة
+    useEffect(() => {
+        const fetchBuses = async () => {
+            const { data } = await supabase.from('buses').select('*');
+            if (data) setBuses(data);
+        };
         fetchBuses();
     }, []);
 
-    const fetchBuses = async () => {
-        const { data } = await supabase.from('buses').select('*');
-        if (data) setBuses(data);
-    };
+    // جلب الطلاب بمجرد تعيين التاريخ
+    useEffect(() => {
+        if (date) fetchCandidates();
+    }, [date]);
 
     const fetchCandidates = async () => {
-        if (!date) return;
         const { data } = await supabase
             .from('return_candidates')
             .select(`
@@ -98,19 +108,10 @@ export default function CreateReturnRidePage() {
     return (
         <div className="max-w-5xl mx-auto p-4 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-                <Share2 size={22} /> توزيع طلاب رحلة العودة
+                <Share2 size={22} /> توزيع طلاب رحلة العودة - {dayjs(date).format('dddd - YYYY/MM/DD')}
             </h1>
 
-            <div className="grid sm:grid-cols-4 gap-4">
-                <div>
-                    <label className="text-blue-700 font-semibold flex items-center gap-1"><CalendarDays size={16} /> التاريخ</label>
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full border rounded p-2"
-                    />
-                </div>
+            <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                     <label className="text-blue-700 font-semibold flex items-center gap-1"><Bus size={16} /> الباص</label>
                     <select
@@ -133,17 +134,9 @@ export default function CreateReturnRidePage() {
                         className="w-full border rounded p-2"
                     />
                 </div>
-                <div className="flex items-end">
-                    <button
-                        onClick={fetchCandidates}
-                        className="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-                    >
-                        عرض الطلاب
-                    </button>
-                </div>
             </div>
 
-            {students.length > 0 && (
+            {students.length > 0 ? (
                 <div className="overflow-x-auto border rounded mt-4">
                     <table className="min-w-full text-sm text-right">
                         <thead className="bg-blue-100 text-blue-800">
@@ -174,6 +167,8 @@ export default function CreateReturnRidePage() {
                         </tbody>
                     </table>
                 </div>
+            ) : (
+                <p className="text-center text-gray-600 mt-6">لا يوجد طلاب لإنشاء رحلة عودة اليوم</p>
             )}
 
             {students.length > 0 && (

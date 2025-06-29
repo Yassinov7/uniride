@@ -107,11 +107,79 @@ export default function CreateGoRidePage() {
         );
     };
 
+    // const handleCreateRide = async () => {
+    //     if (!date || !busId || !time || selected.length === 0) {
+    //         toast.error('❌ يرجى تعبئة جميع الحقول واختيار الطلاب');
+    //         return;
+    //     }
+    //     const {
+    //         data: { user },
+    //     } = await supabase.auth.getUser();
+
+    //     setLoading(true);
+
+    //     try {
+    //         for (let i = 0; i < repeat; i++) {
+    //             const rideDate = dayjs(date).add(i * 7, 'day').format('YYYY-MM-DD');
+
+    //             const { data: ride } = await supabase
+    //                 .from('rides')
+    //                 .insert({
+    //                     date: rideDate,
+    //                     time,
+    //                     bus_id: busId,
+    //                     route_type: 'go',
+    //                 })
+    //                 .select()
+    //                 .single();
+
+    //             for (const student_id of selected) {
+    //                 const studentData = students.find((s) => s.student_id === student_id);
+
+    //                 const fare = studentData.profiles.locations.fare;
+
+    //                 await supabase.from('ride_students').insert({ ride_id: ride.id, student_id });
+
+    //                 await supabase.from('wallet_transactions').insert({
+    //                     student_id,
+    //                     amount: -fare,
+    //                     description: 'أجرة رحلة ذهاب',
+    //                     created_by: user.id,
+    //                 });
+
+    //                 // 2. جلب الرصيد الحالي
+    //                 const { data: wallet } = await supabase
+    //                     .from('wallets')
+    //                     .select('balance')
+    //                     .eq('student_id', student_id)
+    //                     .single();
+
+    //                 const currentBalance = wallet?.balance || 0;
+
+    //                 // 3. تحديث الرصيد (حتى لو سالب)
+    //                 await supabase
+    //                     .from('wallets')
+    //                     .update({ balance: currentBalance - fare })
+    //                     .eq('student_id', student_id);
+    //             }
+
+    //         }
+
+    //         toast.success('✅ تم إنشاء الرحلة بنجاح');
+    //         setSelected([]);
+    //     } catch (err) {
+    //         console.error(err);
+    //         toast.error('❌ حدث خطأ أثناء إنشاء الرحلة');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
     const handleCreateRide = async () => {
         if (!date || !busId || !time || selected.length === 0) {
             toast.error('❌ يرجى تعبئة جميع الحقول واختيار الطلاب');
             return;
         }
+
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -135,7 +203,6 @@ export default function CreateGoRidePage() {
 
                 for (const student_id of selected) {
                     const studentData = students.find((s) => s.student_id === student_id);
-
                     const fare = studentData.profiles.locations.fare;
 
                     await supabase.from('ride_students').insert({ ride_id: ride.id, student_id });
@@ -147,7 +214,6 @@ export default function CreateGoRidePage() {
                         created_by: user.id,
                     });
 
-                    // 2. جلب الرصيد الحالي
                     const { data: wallet } = await supabase
                         .from('wallets')
                         .select('balance')
@@ -156,17 +222,23 @@ export default function CreateGoRidePage() {
 
                     const currentBalance = wallet?.balance || 0;
 
-                    // 3. تحديث الرصيد (حتى لو سالب)
                     await supabase
                         .from('wallets')
                         .update({ balance: currentBalance - fare })
                         .eq('student_id', student_id);
-                }
 
+                    // ✅ حذف الطلب بعد التوزيع
+                    await supabase
+                        .from('ride_requests')
+                        .delete()
+                        .eq('student_id', student_id)
+                        .eq('date', rideDate);
+                }
             }
 
             toast.success('✅ تم إنشاء الرحلة بنجاح');
             setSelected([]);
+            fetchStudents(); // إعادة تحميل الطلبات بعد التوزيع
         } catch (err) {
             console.error(err);
             toast.error('❌ حدث خطأ أثناء إنشاء الرحلة');

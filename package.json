@@ -18,6 +18,7 @@
     "react-hot-toast": "^2.5.2",
     "sooner": "^1.1.4",
     "sweetalert2": "^11.22.1",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

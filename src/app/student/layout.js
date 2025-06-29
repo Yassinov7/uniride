@@ -13,7 +13,8 @@ import {
     UserCircle2,
     FileUp,
     ReceiptTextIcon,
-    CheckIcon
+    CheckIcon,
+    BusIcon
 } from 'lucide-react';
 
 const navItems = [
