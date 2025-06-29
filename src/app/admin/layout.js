@@ -21,10 +21,11 @@ const navItems = [
     { name: 'الجامعات', href: '/admin/universities', icon: <University size={18} /> },
     { name: 'الباصات', href: '/admin/buses', icon: <Bus size={18} /> },
     { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={18} /> },
-    { name: 'الرحلات', href: '/admin/routes', icon: <Route size={18} /> },
+    { name: 'طلبات الحجز', href: '/admin/requests', icon: <Route size={18} /> },
     { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={18} /> },
     { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={18} /> },
-    { name: 'توزيع الطلاب', href: '/admin/assign', icon: <Users size={18} /> },
+    { name: 'رحلات الذهاب', href: '/admin/rides/creatego', icon: <Route size={18} /> },
+    { name: 'رحلات العودة', href: '/admin/rides/createreturn', icon: <Route size={18} /> },
     { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={18} /> },
     { name: 'تصدير البيانات', href: '/admin/export', icon: <FileDown size={18} /> },
 ];

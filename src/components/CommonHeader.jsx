@@ -27,12 +27,7 @@ export default function CommonHeader({ onMenuClick }) {
   return (
     <header className="w-full flex items-center justify-between bg-white border-b p-4 shadow-sm relative">
       {/* زر القائمة - يظهر فقط على الجوال */}
-      <button
-        onClick={onMenuClick}
-        className="md:hidden text-blue-600 absolute right-4 top-1/2 -translate-y-1/2"
-      >
-        <Menu size={26} />
-      </button>
+      
 
       {/* شعار UniRide */}
       <div className="flex items-center gap-2 mx-auto md:mx-0">
@@ -49,6 +44,12 @@ export default function CommonHeader({ onMenuClick }) {
       <div className="text-sm text-gray-700 font-medium block">
         {today}
       </div>
+      <button
+        onClick={onMenuClick}
+        className="md:hidden text-blue-600 absolute right-4 top-1/2 -translate-y-1/2"
+      >
+        <Menu size={26} />
+      </button>
     </header>
   );
 }

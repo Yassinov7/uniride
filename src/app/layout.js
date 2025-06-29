@@ -1,6 +1,6 @@
 'use client';
 import './globals.css'
-
+import { Toaster } from 'react-hot-toast';
 
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -23,7 +23,10 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body>
+        <Toaster position="top-center" reverseOrder={false} />
+        {children}
+      </body>
     </html>
   );
 }

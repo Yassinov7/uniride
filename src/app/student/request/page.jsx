@@ -1,210 +1,296 @@
 'use client';
-
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { BookAlert, DollarSign, Clock4 } from 'lucide-react';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
 
-const days = [
-    { value: 'saturday', label: 'السبت' },
-    { value: 'sunday', label: 'الأحد' },
-    { value: 'monday', label: 'الإثنين' },
-    { value: 'tuesday', label: 'الثلاثاء' },
-    { value: 'wednesday', label: 'الأربعاء' },
-    { value: 'thursday', label: 'الخميس' },
-    { value: 'friday', label: 'الجمعة' },
-];
+dayjs.locale('ar');
+const weekdays = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
 export default function RideRequestPage() {
-    const [form, setForm] = useState({
-        preferred_day: '',
-        go_time: '',
-        expected_return_time: '',
-        start_date: '',
-    });
-
+    const [startDate, setStartDate] = useState('');
+    const [selectedDays, setSelectedDays] = useState([]);
     const [loading, setLoading] = useState(false);
     const [requests, setRequests] = useState([]);
+    const [timingGroup, setTimingGroup] = useState(null); // group_id
+    const [timingData, setTimingData] = useState([]); // [{request_id, date, go_time, return_time}]
+    const [savingTimings, setSavingTimings] = useState(false);
+    const groupByGroupId = (requests) => {
+        const grouped = {};
+        for (const req of requests) {
+            if (!grouped[req.group_id]) {
+                grouped[req.group_id] = {
+                    group_id: req.group_id,
+                    status: req.status,
+                    created_at: req.created_at,
+                    dates: [],
+                };
+            }
+            grouped[req.group_id].dates.push(req.date);
+        }
+        return Object.values(grouped);
+    };
 
     useEffect(() => {
         fetchRequests();
     }, []);
 
     const fetchRequests = async () => {
-        const { data, error } = await supabase
-            .from('ride_requests')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!error) setRequests(data || []);
+        const { data } = await supabase.from('ride_requests').select('*').order('created_at', { ascending: false });
+        setRequests(groupByGroupId(data || []));
     };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((f) => ({ ...f, [name]: value }));
+    const handleToggleDay = (index) => {
+        setSelectedDays((prev) =>
+            prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+        );
+    };
+
+    const handleOpenTimingDialog = async (group_id) => {
+        const { data, error } = await supabase
+            .from('ride_requests')
+            .select('id, date')
+            .eq('group_id', group_id)
+            .eq('status', 'approved');
+
+        if (data && !error) {
+            const initial = data.map((item) => ({
+                request_id: item.id,
+                date: item.date,
+                go_time: '07:00',
+                return_time: '14:00',
+            }));
+            setTimingData(initial);
+            setTimingGroup(group_id);
+        }
+    };
+
+    const handleSaveTimings = async () => {
+        setSavingTimings(true);
+        const inserts = timingData.map((t) => ({
+            request_id: t.request_id,
+            go_time: t.go_time,
+            return_time: t.return_time,
+        }));
+
+        await supabase.from('ride_request_timings').upsert(inserts, { onConflict: 'request_id' });
+
+        toast.success('تم حفظ التوقيتات بنجاح');
+        setSavingTimings(false);
+        setTimingGroup(null);
     };
 
     const handleSubmit = async () => {
-        const { preferred_day, go_time, expected_return_time, start_date } = form;
-        if (!preferred_day || !go_time || !expected_return_time || !start_date) {
-            toast.error('يرجى ملء جميع الحقول');
+        if (!startDate || selectedDays.length === 0) {
+            toast.error('يرجى تحديد تاريخ وأيام الأسبوع');
             return;
         }
 
         setLoading(true);
-
         const { data: userData, error: authError } = await supabase.auth.getUser();
         const studentId = userData?.user?.id;
 
         if (!studentId || authError) {
-            toast.error('حدث خطأ أثناء جلب بيانات الحساب');
+            toast.error('فشل جلب معلومات الحساب');
             setLoading(false);
             return;
         }
 
-        const { error } = await supabase.from('ride_requests').insert({
-            student_id: studentId,
-            preferred_day,
-            go_time,
-            expected_return_time,
-            start_date,
-        });
+        const start = dayjs(startDate).startOf('week').add(5, 'day'); // نبدأ من الجمعة
+        const dates = selectedDays.map((i) => start.add(i, 'day').format('YYYY-MM-DD'));
+        const group_id = crypto.randomUUID();
+
+        const inserts = dates.map((date) => ({ student_id: studentId, date, group_id }));
+        const { error } = await supabase.from('ride_requests').insert(inserts);
 
         setLoading(false);
 
-        if (error) {
-            toast.error('فشل إرسال الطلب');
-        } else {
+        if (error) toast.error('حدث خطأ أثناء الحجز');
+        else {
             toast.success('تم إرسال الطلب بنجاح');
-            setForm({ preferred_day: '', go_time: '', expected_return_time: '', start_date: '' });
+            setSelectedDays([]);
+            setStartDate('');
             fetchRequests();
         }
     };
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-xl font-bold text-blue-600">طلب حجز رحلة</h1>
+        <div className="max-w-xl mx-auto space-y-6">
+            <h1 className="text-xl font-bold text-blue-600">طلب حجز أسبوعي</h1>
+
+            {/* إشعارات */}
             <div className="space-y-3 text-sm text-gray-800 bg-yellow-50 border border-yellow-200 rounded p-4">
                 <div className="flex gap-2 items-start">
-                    <span className="text-yellow-600 text-lg">🗓️</span>
+                    <span className="text-yellow-600 text-lg"><BookAlert /></span>
                     <div>
-                        <p className="font-bold">ملاحظة: الحجز لمدة ٤ أسابيع</p>
-                        <p>
-                            سيتم إنشاء الحجز لأربعة أسابيع متتالية بدءًا من التاريخ الذي تختاره.<br />
-                            <span className="text-gray-600 text-xs">
-                                مثال: إذا اخترت &quot;السبت 2025-07-06&quot;، سيتم الحجز لنفس اليوم في 4 أسابيع قادمة.
-                            </span>
-                        </p>
+                        <p className="font-bold">ملاحظة:</p>
+                        <p>يمكنك تقديم طلب جماعي لأيام متعددة خلال أسبوع واحد فقط.</p>
                     </div>
                 </div>
-
                 <div className="flex gap-2 items-start">
-                    <span className="text-green-600 text-lg">💰</span>
+                    <span className="text-green-600 text-lg"><DollarSign /></span>
                     <div>
-                        <p className="font-bold">تنبيه: الرصيد شرط للحجز</p>
-                        <p>
-                            يجب أن يكون لديك رصيد كافٍ في حسابك لكي يتم اعتماد الحجز من قبل المشرف.
-                        </p>
+                        <p className="font-bold">تنبيه:</p>
+                        <p className="font-bold">يجب وجود رصيد كافٍ. سيتم الخصم بعد الموافقة والتوزيع.</p>
                     </div>
                 </div>
             </div>
 
-            {/* نموذج الطلب */}
-            <div className="bg-white shadow rounded p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700">اليوم</label>
-                        <select
-                            name="preferred_day"
-                            value={form.preferred_day}
-                            onChange={handleChange}
-                            className="w-full border p-2 rounded"
-                        >
-                            <option value="">اختر اليوم</option>
-                            {days.map((d) => (
-                                <option key={d.value} value={d.value}>
-                                    {d.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+            {/* النموذج */}
+            <div className="bg-white p-4 rounded shadow space-y-4">
+                <label className="block text-sm font-medium">حدد أي يوم من الأسبوع (من الجمعة إلى الخميس)</label>
+                <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full p-2 border rounded"
+                />
 
-                    <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700">تاريخ البدء</label>
-                        <input
-                            type="date"
-                            name="start_date"
-                            value={form.start_date}
-                            onChange={handleChange}
-                            className="w-full border p-2 rounded"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700">وقت الذهاب</label>
-                        <input
-                            type="time"
-                            name="go_time"
-                            value={form.go_time}
-                            onChange={handleChange}
-                            className="w-full border p-2 rounded"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700">وقت العودة المتوقع</label>
-                        <input
-                            type="time"
-                            name="expected_return_time"
-                            value={form.expected_return_time}
-                            onChange={handleChange}
-                            className="w-full border p-2 rounded"
-                        />
-                    </div>
-                </div>
+                {startDate && (
+                    <>
+                        <p className="font-medium text-sm mt-4">اختر الأيام المطلوبة من نفس الأسبوع:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {weekdays.map((name, i) => {
+                                const date = dayjs(startDate).startOf('week').add(5 + i, 'day');
+                                return (
+                                    <label key={i} className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDays.includes(i)}
+                                            onChange={() => handleToggleDay(i)}
+                                        />
+                                        {name} - {date.format('YYYY-MM-DD')}
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
 
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
                 >
                     {loading ? 'جاري الإرسال...' : 'إرسال الطلب'}
                 </button>
             </div>
-
-            {/* عرض الطلبات السابقة */}
-            <div className="overflow-x-auto">
-                <table className="min-w-full text-sm border mt-6">
+            <div className="overflow-x-auto mt-8">
+                <table className="min-w-full text-sm border rounded">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="border px-3 py-2">اليوم</th>
-                            <th className="border px-3 py-2">الذهاب</th>
-                            <th className="border px-3 py-2">العودة</th>
-                            <th className="border px-3 py-2 hidden sm:table-cell">التاريخ</th>
-                            <th className="border px-3 py-2">الحالة</th>
+                            <th className="border px-3 py-2 whitespace-nowrap">التواريخ المطلوبة</th>
+                            <th className="border px-3 py-2 whitespace-nowrap">الحالة</th>
+                            <th className="border px-3 py-2 whitespace-nowrap">تم الإرسال في</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.map((r) => (
-                            <tr key={r.id} className="text-center">
-                                <td className="border px-3 py-2">{days.find(d => d.value === r.preferred_day)?.label}</td>
-                                <td className="border px-3 py-2">{r.go_time}</td>
-                                <td className="border px-3 py-2">{r.expected_return_time}</td>
-                                <td className="border px-3 py-2 hidden sm:table-cell">
-                                    {dayjs(r.start_date).format('YYYY-MM-DD')}
+                        {requests.map((group) => (
+                            <tr key={group.group_id} className="text-center hover:bg-gray-50">
+                                <td className="border px-3 py-2 text-right text-xs sm:text-sm">
+                                    {group.dates
+                                        .map(date => {
+                                            const d = dayjs(date);
+                                            return `${d.format('dddd')} - ${d.format('YYYY/MM/DD')}`;
+                                        })
+                                        .join('، ')}
                                 </td>
                                 <td className="border px-3 py-2">
-                                    {r.status === 'approved'
-                                        ? '✅ مقبول'
-                                        : r.status === 'rejected'
+                                    {group.status === 'approved'
+                                        ? <button
+                                            onClick={() => handleOpenTimingDialog(group.group_id)}
+                                            className="mt-2 text-sm bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600"
+                                        >
+                                            تحديد توقيت الذهاب والعودة
+                                        </button>
+                                        : group.status === 'rejected'
                                             ? '❌ مرفوض'
                                             : '⏳ قيد الانتظار'}
                                 </td>
+                                <td className="border px-3 py-2 text-xs sm:text-sm">
+                                    {dayjs(group.created_at).format('YYYY-MM-DD HH:mm')}
+                                </td>
                             </tr>
                         ))}
+                        {requests.length === 0 && (
+                            <tr>
+                                <td colSpan={3} className="text-gray-500 py-4 text-center">
+                                    لا يوجد طلبات حالياً
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
+                {timingGroup && (
+                    <div className="mt-6 bg-white border border-blue-200 rounded-lg p-4 space-y-4 shadow">
+                        <h2 className="text-base font-bold text-blue-600 flex items-center gap-2">
+                            <Clock4 size={18} /> تحديد توقيت الذهاب والعودة
+                        </h2>
+
+                        {timingData.map((item, idx) => (
+                            <div key={item.request_id} className="border-b py-3">
+                                <p className="font-medium text-sm mb-2 text-blue-700">
+                                    {dayjs(item.date).format('dddd - YYYY/MM/DD')}
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-700">وقت الذهاب</label>
+                                        <input
+                                            type="time"
+                                            className="w-full border rounded p-2 text-sm"
+                                            value={item.go_time}
+                                            onChange={(e) =>
+                                                setTimingData((prev) => {
+                                                    const copy = [...prev];
+                                                    copy[idx].go_time = e.target.value;
+                                                    return copy;
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-700">العودة المتوقعة</label>
+                                        <input
+                                            type="time"
+                                            className="w-full border rounded p-2 text-sm"
+                                            value={item.return_time}
+                                            onChange={(e) =>
+                                                setTimingData((prev) => {
+                                                    const copy = [...prev];
+                                                    copy[idx].return_time = e.target.value;
+                                                    return copy;
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4">
+                            <button
+                                onClick={() => setTimingGroup(null)}
+                                className="w-full sm:w-auto px-4 py-2 rounded border border-gray-400 text-gray-700 hover:bg-gray-100"
+                            >
+                                إغلاق
+                            </button>
+                            <button
+                                onClick={handleSaveTimings}
+                                disabled={savingTimings}
+                                className="w-full sm:w-auto px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                            >
+                                {savingTimings ? 'جارٍ الحفظ...' : 'حفظ التوقيتات'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
             </div>
+
+
         </div>
+
     );
 }

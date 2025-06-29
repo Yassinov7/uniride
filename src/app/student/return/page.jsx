@@ -24,13 +24,15 @@ export default function ReturnRidePage() {
         }
 
         const { data, error } = await supabase
-            .from('bookings')
+            .from('ride_students')
             .select(`
-                id,
-                ride_id (
-                    id, date, time, route_type
-                )
-            `)
+      ride_id (
+        id,
+        date,
+        time,
+        route_type
+      )
+    `)
             .eq('student_id', studentId);
 
         if (error) {
@@ -40,18 +42,19 @@ export default function ReturnRidePage() {
 
         const now = dayjs();
 
-        const returnBookings = data
-            .filter(b => b.ride_id?.route_type === 'return')
-            .map(b => ({
-                ...b,
-                rideDateTime: dayjs(`${b.ride_id.date}T${b.ride_id.time}`)
+        const returnRides = data
+            .filter(r => r.ride_id?.route_type === 'return')
+            .map(r => ({
+                ...r,
+                rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`)
             }))
-            .filter(b => b.rideDateTime.isAfter(now.startOf('day')))
+            .filter(r => r.rideDateTime.isAfter(now.startOf('day')))
             .sort((a, b) => a.rideDateTime - b.rideDateTime);
 
-        setBooking(returnBookings[0] || null);
+        setBooking(returnRides[0] || null);
         setLoading(false);
     };
+
 
     return (
         <div className="max-w-lg mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-4">

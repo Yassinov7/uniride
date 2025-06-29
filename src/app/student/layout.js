@@ -12,15 +12,17 @@ import {
     Inbox,
     UserCircle2,
     FileUp,
-    ReceiptTextIcon
+    ReceiptTextIcon,
+    CheckIcon
 } from 'lucide-react';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={18} /> },
     { name: 'الحجز', href: '/student/request', icon: <Bus size={18} /> },
-    { name: 'رحلة الذهاب', href: '/student/bookings', icon: <FileUp size={18} /> },
+    { name: 'رحلة الذهاب', href: '/student/next', icon: <FileUp size={18} /> },
+    { name: 'الحجز', href: '/student/booking', icon: <CheckIcon size={18} /> },
     { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={18} /> },
-    { name: 'سجل الرحلات', href: '/student/bookinghistory', icon: <ReceiptTextIcon size={18} /> },
+    { name: 'سجل الرحلات', href: '/student/history', icon: <ReceiptTextIcon size={18} /> },
     { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={18} /> },
     { name: 'فواتيري', href: '/student/wallet/history', icon: <Inbox size={18} /> },
     { name: 'البيانات الشخصية', href: '/student/profile', icon: <UserCircle2 size={18} /> },
