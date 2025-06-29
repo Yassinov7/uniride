@@ -54,7 +54,7 @@ export default function AuthRedirect() {
             if (profile.role === 'admin') {
                 router.push('/admin/dashboard');
             } else {
-                router.push('/student/rides');
+                router.push('/student');
             }
         };
 

@@ -5,31 +5,28 @@ import Link from 'next/link';
 import { useState } from 'react';
 import {
     X,
-    University,
-    Bus,
-    Route,
-    Users,
-    FileDown,
     LayoutDashboard,
-    HomeIcon,
+    FileDown,
     BadgeDollarSign,
-    Inbox
+    Bus,
+    Inbox,
+    UserCircle2,
+    FileUp,
+    ReceiptTextIcon
 } from 'lucide-react';
 
 const navItems = [
-    { name: 'الصفحة الرئيسية', href: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
-    { name: 'الجامعات', href: '/admin/universities', icon: <University size={18} /> },
-    { name: 'الباصات', href: '/admin/buses', icon: <Bus size={18} /> },
-    { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={18} /> },
-    { name: 'الرحلات', href: '/admin/routes', icon: <Route size={18} /> },
-    { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={18} /> },
-    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={18} /> },
-    { name: 'توزيع الطلاب', href: '/admin/assign', icon: <Users size={18} /> },
-    { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={18} /> },
-    { name: 'تصدير البيانات', href: '/admin/export', icon: <FileDown size={18} /> },
+    { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={18} /> },
+    { name: 'الحجز', href: '/student/request', icon: <Bus size={18} /> },
+    { name: 'رحلة الذهاب', href: '/student/bookings', icon: <FileUp size={18} /> },
+    { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={18} /> },
+    { name: 'سجل الرحلات', href: '/student/bookinghistory', icon: <ReceiptTextIcon size={18} /> },
+    { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={18} /> },
+    { name: 'فواتيري', href: '/student/wallet/history', icon: <Inbox size={18} /> },
+    { name: 'البيانات الشخصية', href: '/student/profile', icon: <UserCircle2 size={18} /> },
 ];
 
-export default function AdminLayout({ children }) {
+export default function StudentLayout({ children }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -41,7 +38,7 @@ export default function AdminLayout({ children }) {
                 {/* Sidebar - Large Screens */}
                 <aside className="hidden md:flex flex-col w-64 bg-blue-600 text-white">
                     <div className="p-6 text-xl font-bold border-b border-blue-500">
-                        لوحة التحكم
+                        منطقة الطالب
                     </div>
                     <nav className="flex-1 px-4 py-6 space-y-3">
                         {navItems.map((item) => (
@@ -79,7 +76,7 @@ export default function AdminLayout({ children }) {
                                     <X size={24} />
                                 </button>
                             </div>
-                            <nav className="space-y-4 ">
+                            <nav className="space-y-4">
                                 {navItems.map((item) => (
                                     <Link
                                         key={item.href}
