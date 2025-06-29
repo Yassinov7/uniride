@@ -19,8 +19,8 @@ import {
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={18} /> },
     { name: 'الحجز', href: '/student/request', icon: <Bus size={18} /> },
-    { name: 'رحلة الذهاب', href: '/student/next', icon: <FileUp size={18} /> },
-    { name: 'الحجز', href: '/student/booking', icon: <CheckIcon size={18} /> },
+    { name: 'رحلاتي', href: '/student/next', icon: <FileUp size={18} /> },
+    // { name: 'الحجز', href: '/student/booking', icon: <CheckIcon size={18} /> },
     { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={18} /> },
     { name: 'سجل الرحلات', href: '/student/history', icon: <ReceiptTextIcon size={18} /> },
     { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={18} /> },
