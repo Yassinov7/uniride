@@ -25,12 +25,9 @@ export default function CommonHeader({ onMenuClick }) {
   }, []);
 
   return (
-    <header className="w-full flex items-center justify-between bg-white border-b p-4 shadow-sm relative">
-      {/* زر القائمة - يظهر فقط على الجوال */}
-      
-
+    <header className="w-full flex items-center justify-between bg-white border-b p-4 shadow-sm" dir="rtl">
       {/* شعار UniRide */}
-      <div className="flex items-center gap-2 mx-auto md:mx-0">
+      <div className="flex items-center gap-2 shrink-0">
         <Image
           src="/favicon_io/android-chrome-512x512.png"
           alt="UniRide"
@@ -40,16 +37,18 @@ export default function CommonHeader({ onMenuClick }) {
         <span className="text-xl font-bold text-blue-600">UniRide</span>
       </div>
 
-      {/* التاريخ */}
-      <div className="text-sm text-gray-700 font-medium block">
-        {today}
+      {/* التاريخ + زر القائمة */}
+      <div className="flex items-center gap-4 text-sm text-gray-700 font-medium">
+        <span className="inline text-orange-500">{today}</span>
+        <button
+          onClick={onMenuClick}
+          className="md:hidden text-blue-600"
+          aria-label="القائمة"
+        >
+          <Menu size={26} />
+        </button>
       </div>
-      <button
-        onClick={onMenuClick}
-        className="md:hidden text-blue-600 absolute right-4 top-1/2 -translate-y-1/2"
-      >
-        <Menu size={26} />
-      </button>
     </header>
+
   );
 }

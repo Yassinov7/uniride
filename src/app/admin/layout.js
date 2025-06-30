@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-    { name: 'الصفحة الرئيسية', href: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
+    { name: 'الصفحة الرئيسية', href: '/admin', icon: <LayoutDashboard size={18} /> },
     { name: 'الجامعات', href: '/admin/universities', icon: <University size={18} /> },
     { name: 'الباصات', href: '/admin/buses', icon: <Bus size={18} /> },
     { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={18} /> },
@@ -71,31 +71,33 @@ export default function AdminLayout({ children }) {
                         onClick={() => setOpen(false)}
                     >
                         <aside
-                            className="w-64 h-full bg-white shadow-md p-4 fixed right-0 top-0 z-50"
+                            className="w-64 h-full bg-blue-600 text-white shadow-md p-4 fixed left-0 top-0 z-50"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-blue-600 font-bold text-xl">القائمة</h2>
+                                <h2 className="font-bold text-xl">القائمة</h2>
                                 <button onClick={() => setOpen(false)}>
                                     <X size={24} />
                                 </button>
                             </div>
-                            <nav className="space-y-4 ">
+
+                            <nav className="space-y-3">
                                 {navItems.map((item) => (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         onClick={() => setOpen(false)}
-                                        className="flex items-center justify-start gap-2 text-gray-800 hover:text-orange-500 transition"
+                                        className="flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-500 transition"
                                     >
-                                        <span>{item.name}</span>
                                         {item.icon}
+                                        <span>{item.name}</span>
                                     </Link>
                                 ))}
                             </nav>
+
                             <Link
                                 href="/"
-                                className="block mt-6 bg-blue-600 text-white text-center rounded py-2 hover:bg-orange-500 transition"
+                                className="block mt-6 bg-blue-700 text-center rounded py-2 hover:bg-orange-500 transition"
                             >
                                 العودة للرئيسية
                             </Link>

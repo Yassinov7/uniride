@@ -5,13 +5,14 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import {
     LayoutDashboard,
+    University,
     Bus,
-    FileUp,
-    FileDown,
-    ReceiptTextIcon,
+    HomeIcon,
+    Route,
     BadgeDollarSign,
     Inbox,
-    UserCircle2,
+    Users,
+    FileDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -19,17 +20,20 @@ import { supabase } from '@/lib/supabase';
 dayjs.locale('ar');
 
 const navItems = [
-    { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={28} /> },
-    { name: 'الحجز', href: '/student/request', icon: <Bus size={28} /> },
-    { name: 'رحلاتي', href: '/student/next', icon: <FileUp size={28} /> },
-    { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={28} /> },
-    { name: 'سجل الرحلات', href: '/student/history', icon: <ReceiptTextIcon size={28} /> },
-    { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={28} /> },
-    { name: 'فواتيري', href: '/student/wallet/history', icon: <Inbox size={28} /> },
-    { name: 'البيانات الشخصية', href: '/student/profile', icon: <UserCircle2 size={28} /> },
+    { name: 'الصفحة الرئيسية', href: '/admin', icon: <LayoutDashboard size={28} /> },
+    { name: 'الجامعات', href: '/admin/universities', icon: <University size={28} /> },
+    { name: 'الباصات', href: '/admin/buses', icon: <Bus size={28} /> },
+    { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={28} /> },
+    { name: 'طلبات الحجز', href: '/admin/requests', icon: <Route size={28} /> },
+    { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={28} /> },
+    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={28} /> },
+    { name: 'رحلات الذهاب', href: '/admin/rides/creatego', icon: <Route size={28} /> },
+    { name: 'رحلات العودة', href: '/admin/rides/createreturn', icon: <Route size={28} /> },
+    { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={28} /> },
+    { name: 'تصدير البيانات', href: '/admin/export', icon: <FileDown size={28} /> },
 ];
 
-export default function StudentHomePage() {
+export default function AdminHomePage() {
     const [dateTime, setDateTime] = useState(dayjs());
     const [fullName, setFullName] = useState('');
 
@@ -60,16 +64,16 @@ export default function StudentHomePage() {
     }, []);
 
     return (
-        <div className="max-w-5xl mx-auto mt-8 p-6 bg-white rounded-lg shadow space-y-10" dir="rtl">
+        <div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-lg shadow space-y-10" dir="rtl">
             {/* العنوان والترحيب */}
             <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-blue-700">مرحباً {fullName || 'عزيزي الطالب'} 👋</h1>
+                <h1 className="text-2xl font-bold text-blue-700">أهلاً بك يا {fullName || 'مشرف'} 👋</h1>
                 <p className="text-gray-600 text-lg">
                     {dateTime.format('dddd، D MMMM YYYY')} - الساعة {dateTime.format('hh:mm')}
                 </p>
             </div>
 
-            {/* روابط التنقل */}
+            {/* روابط لوحة التحكم */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {navItems.map((item, idx) => (
                     <Link

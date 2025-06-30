@@ -18,7 +18,7 @@ export default function Register() {
             toast.error(error.message);
         } else {
             toast.success('تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني!');
-            router.push('/auth/login');
+            router.push('/login');
         }
     };
 

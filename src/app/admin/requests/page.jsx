@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Building2, MapPin, User, Check, X, Clock } from 'lucide-react';
+import { Check, X, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 

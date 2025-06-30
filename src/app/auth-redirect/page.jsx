@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
+import { BusFront } from 'lucide-react';
 
 export default function AuthRedirect() {
     const router = useRouter();
@@ -11,7 +12,6 @@ export default function AuthRedirect() {
 
     useEffect(() => {
         const checkAndRedirect = async () => {
-            // التحقق من جلسة المستخدم
             const {
                 data: { session },
             } = await supabase.auth.getSession();
@@ -23,14 +23,12 @@ export default function AuthRedirect() {
 
             const userId = session.user.id;
 
-            // التحقق من وجود سجل المستخدم في profiles
             let { data: profile, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .single();
 
-            // إذا لم يكن هناك سجل، نقوم بإنشاء سجل جديد (دور الطالب افتراضيًا)
             if (!profile) {
                 const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
@@ -47,12 +45,10 @@ export default function AuthRedirect() {
                 profile = newProfile;
             }
 
-            // تحديث Zustand store
             setUser(profile);
 
-            // التوجيه حسب الدور
             if (profile.role === 'admin') {
-                router.push('/admin/dashboard');
+                router.push('/admin');
             } else {
                 router.push('/student');
             }
@@ -62,8 +58,12 @@ export default function AuthRedirect() {
     }, [router, setUser]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            جاري التحقق والتوجيه...
+        <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 text-center p-6">
+            <div className="animate-bounce text-blue-600 mb-4">
+                <BusFront size={72} />
+            </div>
+            <h1 className="text-xl font-bold text-blue-800 mb-2">جارٍ توجيهك إلى وجهتك المناسبة</h1>
+            <p className="text-gray-600">يرجى الانتظار قليلاً أثناء تحميل معلومات حسابك...</p>
         </div>
     );
 }
