@@ -8,6 +8,12 @@ import 'dayjs/locale/ar';
 
 dayjs.locale('ar');
 const weekdays = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+const getStartFriday = (dateStr) => {
+  const input = dayjs(dateStr);
+  const dayOfWeek = input.day(); // 0 (الأحد) إلى 6 (السبت)
+  const daysToFriday = (dayOfWeek >= 5) ? dayOfWeek - 5 : 7 - (5 - dayOfWeek);
+  return input.subtract(daysToFriday, 'day');
+};
 
 export default function RideRequestPage() {
     const [startDate, setStartDate] = useState('');

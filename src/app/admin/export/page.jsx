@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import { Download, CalendarDays, ListTree } from 'lucide-react';
+import * as XLSX from 'xlsx'; // <-- إضافة هنا
 
 dayjs.locale('ar');
 
@@ -17,41 +18,96 @@ export default function ExportRidesPage() {
     }, [date, routeType]);
 
     const fetchRides = async () => {
-        const { data } = await supabase
+        const { data: ridesData } = await supabase
             .from('rides')
-            .select(`
-                id, date, time, route_type,
-                buses(name),
-                ride_students(
-                    profiles(full_name)
-                )
-            `)
+            .select('id, date, time, route_type, buses(name)')
             .eq('date', date)
             .eq('route_type', routeType);
 
-        setRides(data || []);
+        const ridesWithStudents = await Promise.all(
+            (ridesData || []).map(async (ride) => {
+                const { data: students } = await supabase
+                    .from('ride_students')
+                    .select('profiles(full_name)')
+                    .eq('ride_id', ride.id);
+
+                return {
+                    ...ride,
+                    ride_students: students || [],
+                };
+            })
+        );
+
+        setRides(ridesWithStudents);
     };
 
-    const exportCSV = (ride) => {
-        const headers = ['نوع الرحلة', 'التاريخ', 'الساعة', 'اسم الباص', 'أسماء الطلاب'];
-        const students = ride.ride_students.map(s => s.profiles?.full_name || '').join('، ');
-        const row = [
-            ride.route_type === 'go' ? 'ذهاب' : 'عودة',
-            ride.date,
-            ride.time,
-            ride.buses?.name || '',
-            `"${students}"`  // اقتباس حتى لا تنكسر الفواصل
-        ];
 
-        const csv = [headers.join(','), row.join(',')].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `ride-${ride.route_type}-${ride.date}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
-    };
+    // const exportExcel = (ride) => {
+    //     const students = ride.ride_students.map(s => s.profiles?.full_name || '').join('، ');
+    //     const data = [{
+    //         'نوع الرحلة': ride.route_type === 'go' ? 'ذهاب' : 'عودة',
+    //         'التاريخ': ride.date,
+    //         'الساعة': ride.time,
+    //         'اسم الباص': ride.buses?.name || '',
+    //         'أسماء الطلاب': students,
+    //     }];
+
+    //     const worksheet = XLSX.utils.json_to_sheet(data);
+    //     const workbook = XLSX.utils.book_new();
+    //     XLSX.utils.book_append_sheet(workbook, worksheet, 'الرحلة');
+
+    //     XLSX.writeFile(workbook, `ride-${ride.route_type}-${ride.date}.xlsx`);
+    // };
+    // const exportExcel = (ride) => {
+    //     console.log('ride_students:', ride.ride_students);
+
+    //     const studentNames = ride.ride_students.map((s) => [s.profiles?.full_name || '']);
+
+    //     // معلومات الرحلة في صف مستقل
+    //     const rideInfoRow = [
+    //         `نوع الرحلة: ${ride.route_type === 'go' ? 'ذهاب' : 'عودة'}`,
+    //         `التاريخ: ${ride.date}`,
+    //         `الساعة: ${ride.time}`,
+    //         `اسم الباص: ${ride.buses?.name || ''}`
+    //     ];
+
+    //     // تركيب الورقة: كل اسم في صف مستقل، ثم صف الرحلة
+    //     const sheetData = [
+    //         ['أسماء الطلاب'],
+    //         ...studentNames,
+    //         [],
+    //         rideInfoRow
+    //     ];
+
+    //     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    //     const workbook = XLSX.utils.book_new();
+    //     XLSX.utils.book_append_sheet(workbook, worksheet, 'الرحلة');
+    //     XLSX.writeFile(workbook, `ride-${ride.route_type}-${ride.date}.xlsx`);
+    // };
+    const exportExcel = (ride) => {
+    const rideInfoRow = [
+        `نوع الرحلة: ${ride.route_type === 'go' ? 'ذهاب' : 'عودة'}`,
+        `التاريخ: ${ride.date}`,
+        `الساعة: ${ride.time}`,
+        `اسم الباص: ${ride.buses?.name || ''}`
+    ];
+
+    const studentNames = ride.ride_students
+        .filter(s => s?.profiles?.full_name)
+        .map((s) => [s.profiles.full_name]);
+
+    const sheetData = [
+        rideInfoRow,
+        [],
+        ['أسماء الطلاب'],
+        ...studentNames
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'الرحلة');
+    XLSX.writeFile(workbook, `ride-${ride.route_type}-${ride.date}.xlsx`);
+};
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6 text-right" dir="rtl">
@@ -94,10 +150,10 @@ export default function ExportRidesPage() {
                             <div className="text-sm text-gray-700">الطلاب: {ride.ride_students.map(s => s.profiles?.full_name).join('، ')}</div>
 
                             <button
-                                onClick={() => exportCSV(ride)}
+                                onClick={() => exportExcel(ride)}
                                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
                             >
-                                <Download size={16} /> تصدير CSV
+                                <Download size={16} /> تصدير Excel
                             </button>
                         </div>
                     ))}
