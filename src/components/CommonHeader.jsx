@@ -29,7 +29,7 @@ export default function CommonHeader({ onMenuClick }) {
       {/* شعار UniRide */}
       <div className="flex items-center gap-2 shrink-0">
         <Image
-          src="/favicon_io/android-chrome-512x512.png"
+          src="/android-chrome-512x512.png"
           alt="UniRide"
           width={48}
           height={48}
