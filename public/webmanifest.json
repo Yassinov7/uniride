@@ -17,7 +17,7 @@
   "theme_color": "#2563eb",
   "background_color": "#eff6ff",
   "display": "standalone",
-  "start_url": "/",
+  "start_url": "/auth-redirect",
   "orientation": "portrait",
   "lang": "ar",
   "dir": "rtl"
