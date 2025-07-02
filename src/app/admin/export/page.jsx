@@ -118,36 +118,51 @@ export default function ExportRidesPage() {
             )}
 
             {selectedRide && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+                <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-lg p-6 relative text-right">
+                        {/* زر الإغلاق */}
                         <button
                             className="absolute top-3 left-3 text-gray-500 hover:text-red-500"
                             onClick={() => setSelectedRide(null)}
                         >
                             <X size={22} />
                         </button>
+
+                        {/* العنوان */}
                         <h2 className="text-lg font-bold text-blue-700 mb-4">تفاصيل الرحلة</h2>
-                        <p><strong>التاريخ:</strong> {selectedRide.date}</p>
-                        <p><strong>الساعة:</strong> {selectedRide.time}</p>
-                        <p><strong>الباص:</strong> {selectedRide.buses?.name}</p>
-                        <p><strong>نوع الرحلة:</strong> {selectedRide.route_type === 'go' ? 'ذهاب' : 'عودة'}</p>
-                        <p><strong>عدد الطلاب:</strong> {selectedRide.ride_students.length}</p>
-                        <div className="mt-4">
-                            <strong>أسماء الطلاب:</strong>
-                            <ul className="list-disc pr-4 mt-2 text-sm text-gray-700">
-                                {selectedRide.ride_students.map((s, idx) => (
-                                    <li key={idx}>{s.profiles?.full_name}</li>
-                                ))}
-                            </ul>
+
+                        {/* المعلومات الأساسية */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-700 mb-4">
+                            <p><strong>التاريخ:</strong> {selectedRide.date}</p>
+                            <p><strong>الساعة:</strong> {selectedRide.time}</p>
+                            <p><strong>الباص:</strong> {selectedRide.buses?.name}</p>
+                            <p><strong>نوع الرحلة:</strong> {selectedRide.route_type === 'go' ? 'ذهاب' : 'عودة'}</p>
+                            <p className="sm:col-span-2"><strong>عدد الطلاب:</strong> {selectedRide.ride_students.length}</p>
                         </div>
+
+                        {/* أسماء الطلاب */}
+                        <div className="mt-4">
+                            <strong className="block mb-2"> الطلاب:</strong>
+                            <ol type='1' className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
+                                {selectedRide.ride_students.map((s, idx) => (
+                                    <li key={idx} className="flex items-start gap-1">
+                                        {/* <span >•</span> */}
+                                        <span className="text-blue-600 font-bold">{s.profiles?.full_name}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+
+                        {/* زر تصدير */}
                         <button
                             onClick={() => exportExcel(selectedRide)}
-                            className="mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                            className="mt-6 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 flex items-center gap-2"
                         >
                             <Download size={16} /> تصدير Excel
                         </button>
                     </div>
                 </div>
+
             )}
         </div>
     );

@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
-import { Calendar, Clock, BusFront, CheckCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar, Clock, BusFront, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function NextBookingPage() {
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [allBookings, setAllBookings] = useState([]);
     const [confirmed, setConfirmed] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         fetchBooking();
@@ -18,9 +20,7 @@ export default function NextBookingPage() {
 
     const fetchBooking = async () => {
         const { data: userData } = await supabase.auth.getUser();
-        console.log('👤 studentId:', userData?.user?.id);
         const studentId = userData?.user?.id;
-
         if (!studentId) return toast.error('لم يتم التعرف على المستخدم');
 
         const { data, error } = await supabase
@@ -38,42 +38,27 @@ export default function NextBookingPage() {
             }));
 
         const now = dayjs();
-        const after6PM = now.hour() >= 18;
+        const today = now.startOf('day');
 
         const futureRides = rides
             .filter(r => {
-                if (after6PM) {
-                    return r.rideDateTime.isAfter(now.add(1, 'day').startOf('day'));
+                const rideDate = r.rideDateTime.startOf('day');
+                // إظهار حجز اليوم حتى الساعة 6 مساءً
+                if (rideDate.isSame(today)) {
+                    return now.hour() < 18;
                 }
-                return r.rideDateTime.isAfter(now);
+                return rideDate.isAfter(today);
             })
             .sort((a, b) => a.rideDateTime - b.rideDateTime);
 
         const next = futureRides.find(r => r.ride_id.route_type === 'go') || null;
+
         setBooking(next);
         setAllBookings(futureRides);
         checkIfAlreadyConfirmed(studentId);
         setLoading(false);
     };
 
-    // const checkIfAlreadyConfirmed = async (studentId) => {
-    //     // const today = new Date().toISOString().slice(0, 10);
-    //     const { data, error } = await supabase
-    //         .from('return_candidates')
-    //         .select('id, date')
-    //         .eq('student_id', studentId);
-
-
-    //     if (error) {
-    //         console.error(error);
-    //         return;
-    //     }
-
-    //     const today = dayjs().format('YYYY-MM-DD');
-    //     const found = data?.some(record => record.date === today);
-
-    //     if (found) setConfirmed(true);
-    // };
     const checkIfAlreadyConfirmed = async (studentId) => {
         const today = dayjs().format('YYYY-MM-DD');
 
@@ -92,7 +77,6 @@ export default function NextBookingPage() {
             setConfirmed(true);
         }
     };
-
 
     const handleConfirm = async () => {
         const { data: userData } = await supabase.auth.getUser();
@@ -128,13 +112,13 @@ export default function NextBookingPage() {
         }
     };
 
-
     const now = dayjs();
-    const after8AM = now.hour() >= 8;
-    const showButton = booking && booking.ride_id.route_type === 'go' && after8AM && !confirmed;
+    const isToday = booking && dayjs(booking.ride_id.date).isSame(now, 'day');
+    const isGo = booking?.ride_id.route_type === 'go';
+    const showButton = isToday && isGo && now.hour() >= 8 && now.hour() < 18 && !confirmed;
 
     return (
-        <div className="max-w-3xl mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-6">
+        <div className="max-w-3xl mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-6" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 text-center">الحجز القادم</h1>
 
             {loading ? (
@@ -164,9 +148,18 @@ export default function NextBookingPage() {
                     )}
 
                     {confirmed && (
-                        <div className="flex justify-center gap-2 items-center text-green-600 font-semibold">
-                            <CheckCircle size={20} />
-                            تم تأكيد انتهاء الدوام
+                        <div className="space-y-4">
+                            <div className="flex justify-center gap-2 items-center text-green-600 font-semibold">
+                                <CheckCircle size={20} />
+                                تم تأكيد انتهاء الدوام (بانتظار رحلة العودة)
+                            </div>
+                            <button
+                                onClick={() => router.push('/student/return')}
+                                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+                            >
+                                <ArrowRight size={18} />
+                                الانتقال إلى رحلة العودة
+                            </button>
                         </div>
                     )}
                 </div>
@@ -189,11 +182,15 @@ export default function NextBookingPage() {
                         <tbody>
                             {allBookings.map((b, i) => (
                                 <tr key={i} className="border-t">
-                                    <td className="px-4 py-2">{dayjs(b.ride_id.date).format('dddd YYYY-MM-DD')}</td>
+                                    <td className="px-4 py-2">
+                                        {dayjs(b.ride_id.date).format('dddd YYYY-MM-DD')}
+                                    </td>
                                     <td className="px-4 py-2">
                                         {dayjs(`${b.ride_id.date}T${b.ride_id.time}`).format('hh:mm A')}
                                     </td>
-                                    <td className="px-4 py-2">{b.ride_id.route_type === 'go' ? 'ذهاب' : 'عودة'}</td>
+                                    <td className="px-4 py-2">
+                                        {b.ride_id.route_type === 'go' ? 'ذهاب' : 'عودة'}
+                                    </td>
                                 </tr>
                             ))}
                             {allBookings.length === 0 && (
