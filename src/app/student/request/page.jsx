@@ -9,11 +9,12 @@ import 'dayjs/locale/ar';
 dayjs.locale('ar');
 const weekdays = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 const getStartFriday = (dateStr) => {
-  const input = dayjs(dateStr);
-  const dayOfWeek = input.day(); // 0 (الأحد) إلى 6 (السبت)
-  const daysToFriday = (dayOfWeek >= 5) ? dayOfWeek - 5 : 7 - (5 - dayOfWeek);
-  return input.subtract(daysToFriday, 'day');
+    const input = dayjs(dateStr);
+    const dayOfWeek = input.day(); // 0: الأحد .. 6: السبت
+    const daysToSubtract = (dayOfWeek + 2) % 7; // لحساب الفرق إلى الجمعة
+    return input.subtract(daysToSubtract, 'day');
 };
+
 
 export default function RideRequestPage() {
     const [startDate, setStartDate] = useState('');
@@ -104,7 +105,7 @@ export default function RideRequestPage() {
             return;
         }
 
-        const start = dayjs(startDate).startOf('week').add(5, 'day'); // نبدأ من الجمعة
+        const start = getStartFriday(startDate);
         const dates = selectedDays.map((i) => start.add(i, 'day').format('YYYY-MM-DD'));
         const group_id = crypto.randomUUID();
 
