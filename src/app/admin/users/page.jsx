@@ -19,11 +19,11 @@ export default function AdminStudentsPage() {
         const { data: profiles } = await supabase
             .from('profiles')
             .select(`
-        full_name, gender,
+        full_name, gender,phone,
         universities(name),
         locations(name)
       `)
-      .eq('role', 'student');
+            .eq('role', 'student');
 
         const { data: unis } = await supabase.from('universities').select('*');
         const { data: locs } = await supabase.from('locations').select('*');
@@ -48,6 +48,7 @@ export default function AdminStudentsPage() {
     const exportToExcel = () => {
         const data = filtered.map((s) => ({
             الاسم: s.full_name,
+            'رقم الهاتف': s.phone || '',
             الجنس: s.gender === 'male' ? 'ذكر' : 'أنثى',
             الجامعة: s.universities?.name,
             المنطقة: s.locations?.name,
@@ -121,6 +122,7 @@ export default function AdminStudentsPage() {
                     <thead className="bg-blue-100 text-blue-800">
                         <tr>
                             <th className="p-2">الاسم</th>
+                            <th className="p-2">رقم الهاتف</th>
                             <th className="p-2">الجنس</th>
                             <th className="p-2">الجامعة</th>
                             <th className="p-2">المنطقة</th>
@@ -130,6 +132,7 @@ export default function AdminStudentsPage() {
                         {filtered.map((s, i) => (
                             <tr key={i} className="border-b hover:bg-gray-50">
                                 <td className="p-2">{s.full_name}</td>
+                                <td className="p-2">{s.phone || '-'}</td>
                                 <td className="p-2">{s.gender === 'male' ? 'ذكر' : 'أنثى'}</td>
                                 <td className="p-2">{s.universities?.name}</td>
                                 <td className="p-2">{s.locations?.name}</td>

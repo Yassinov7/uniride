@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { Pencil, Mail, UserCircle, University, MapPin, Lock } from 'lucide-react';
+import { Pencil, Mail, UserCircle, University, MapPin, Lock, Phone } from 'lucide-react';
 import Modal from '@/components/Modal';
 
 export default function StudentProfilePage() {
@@ -20,6 +20,7 @@ export default function StudentProfilePage() {
         gender: '',
         university_id: null,
         location_id: null,
+        phone: '',
     });
 
     useEffect(() => {
@@ -38,7 +39,7 @@ export default function StudentProfilePage() {
 
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, full_name, gender, university_id, location_id, universities(name), locations(name)')
+            .select('id, full_name, gender, university_id, location_id,phone, universities(name), locations(name)')
             .eq('id', userId)
             .single();
 
@@ -51,6 +52,7 @@ export default function StudentProfilePage() {
                 gender: data.gender || '',
                 university_id: data.university_id || null,
                 location_id: data.location_id || null,
+                phone: data.phone || '',
             });
         }
 
@@ -110,6 +112,12 @@ export default function StudentProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-3 text-gray-700">
+                    <Phone className="text-primary" />
+                    <span className="font-semibold">رقم الهاتف:</span>
+                    <span>{profile.phone || <span className="text-red-500">غير مُدخل</span>}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-700">
                     <Mail className="text-primary" />
                     <span className="font-semibold">الصفة:</span>
                     <span>{profile.gender === 'male' ? 'طالب' : profile.gender === 'female' ? 'طالبة' : <span className="text-red-500">غير مُدخل</span>}</span>
@@ -158,29 +166,25 @@ export default function StudentProfilePage() {
                             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                         />
 
+                        <input
+                            type="tel"
+                            className="w-full border rounded px-3 py-2"
+                            placeholder="رقم الهاتف (مثال: 0998877665)"
+                            value={form.phone}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        />
+
                         <select
                             className="w-full border rounded px-3 py-2"
                             value={form.gender}
                             onChange={(e) => setForm({ ...form, gender: e.target.value })}
                         >
-                            <option value="">اختر الصفة</option>
+                            <option disabled value="">اختر الصفة</option>
                             <option value="male">طالب</option>
                             <option value="female">طالبة</option>
                         </select>
 
-                        {/* <select
-                            className="w-full border rounded px-3 py-2"
-                            value={form.university_id ?? ''}
-                            onChange={(e) =>
-                                setForm({ ...form, university_id: e.target.value ? Number(e.target.value) : null })
-                            }
 
-                        >
-                            <option value="">اختر الجامعة</option>
-                            {universities.map((u) => (
-                                <option key={u.id} value={u.id}>{u.name}</option>
-                            ))}
-                        </select> */}
                         <select
                             className="w-full border rounded px-3 py-2"
                             value={form.university_id || ''}
@@ -191,7 +195,7 @@ export default function StudentProfilePage() {
                                 })
                             }
                         >
-                            <option value="">اختر الجامعة</option>
+                            <option disabled value="">اختر الجامعة</option>
                             {universities.map((u) => (
                                 <option key={u.id} value={u.id}>{u.name}</option>
                             ))}
@@ -206,7 +210,7 @@ export default function StudentProfilePage() {
                                 })
                             }
                         >
-                            <option value="">اختر المنطقة</option>
+                            <option disabled value="">اختر المنطقة</option>
                             {locations.map((l) => (
                                 <option key={l.id} value={l.id}>{l.name}</option>
                             ))}
