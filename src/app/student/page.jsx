@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import {
-    LayoutDashboard,
     Bus,
     FileUp,
     FileDown,
@@ -12,6 +11,7 @@ import {
     BadgeDollarSign,
     Inbox,
     UserCircle2,
+    FileWarning
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -19,7 +19,6 @@ import { supabase } from '@/lib/supabase';
 dayjs.locale('ar');
 
 const navItems = [
-    { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={28} /> },
     { name: 'الحجز', href: '/student/request', icon: <Bus size={28} /> },
     { name: 'رحلاتي', href: '/student/next', icon: <FileUp size={28} /> },
     { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={28} /> },
@@ -32,6 +31,9 @@ const navItems = [
 export default function StudentHomePage() {
     const [dateTime, setDateTime] = useState(dayjs());
     const [fullName, setFullName] = useState('');
+    const [needsWallet, setNeedsWallet] = useState(false);
+    const [needsProfileUpdate, setNeedsProfileUpdate] = useState(false);
+    const [loadingCheck, setLoadingCheck] = useState(true); // 💡 مهم لإخفاء التنبيه أثناء التحقق
 
     useEffect(() => {
         const interval = setInterval(() => setDateTime(dayjs()), 1000);
@@ -39,49 +41,117 @@ export default function StudentHomePage() {
     }, []);
 
     useEffect(() => {
-        const fetchName = async () => {
+        const fetchInfo = async () => {
             const { data: userData } = await supabase.auth.getUser();
             const userId = userData?.user?.id;
-
             if (!userId) return;
 
-            const { data } = await supabase
+            // جلب الاسم والبيانات الشخصية
+            const { data: profile } = await supabase
                 .from('profiles')
-                .select('full_name')
+                .select('full_name, university_id, location_id, gender')
                 .eq('id', userId)
                 .single();
 
-            if (data?.full_name) {
-                setFullName(data.full_name);
+            if (profile?.full_name) setFullName(profile.full_name);
+
+            if (
+                !profile?.university_id ||
+                !profile?.location_id ||
+                !profile?.gender
+            ) {
+                setNeedsProfileUpdate(true);
             }
+
+            // جلب المحفظة
+            const { data: wallet } = await supabase
+                .from('wallets')
+                .select('student_id')
+                .eq('student_id', userId)
+                .single();
+
+            if (!wallet || wallet.balance < 0) {
+                setNeedsWallet(true);
+            }
+
+            setLoadingCheck(false); // ✅ بعد انتهاء الفحص
         };
 
-        fetchName();
+        fetchInfo();
     }, []);
 
     return (
         <div className="max-w-5xl mx-auto mt-8 p-6 bg-white rounded-lg shadow space-y-10" dir="rtl">
-            {/* العنوان والترحيب */}
-            <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-blue-700">مرحباً {fullName || 'عزيزي الطالب'} 👋</h1>
-                <p className="text-gray-600 text-lg">
-                    {dateTime.format('dddd، D MMMM YYYY')} - الساعة {dateTime.format('hh:mm')}
+
+            {/* ✅ تنبيه إرشادي للطالب */}
+            {!loadingCheck && (needsWallet || needsProfileUpdate) && (
+                <div className="bg-yellow-50 border border-yellow-400 rounded-lg p-4 shadow flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-yellow-800 font-semibold text-lg">
+                        <span className="animate-pulse text-yellow-500"><FileWarning size={26} /></span>
+                        نرجو منك إتمام الخطوات التالية لتفعيل حسابك بالكامل، وتتمكن من الحجز.
+                    </div>
+
+                    {needsWallet && (
+                        <div className="bg-white border border-yellow-300 rounded-md p-4 shadow-sm text-center">
+                            <p className="text-sm text-gray-800 mb-3">
+                                قم بزيارة صفحة <strong>رصيدي</strong> لتفقد رصيدك
+                            </p>
+                            <Link
+                                href="/student/wallet"
+                                className="inline-flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded transition"
+                            >
+                                <BadgeDollarSign size={20} /> الذهاب لرصيدي
+                            </Link>
+                        </div>
+
+                    )}
+
+                    {needsProfileUpdate && (
+                        <div className=" bg-white border border-yellow-300 rounded-md p-4 shadow-sm text-center">
+                            <p className="text-sm text-gray-800 mb-3">
+                                معلوماتك الشخصية غير مكتملة. يُرجى إدخال البيانات الناقصة .
+                            </p>
+                            <Link
+                                href="/student/profile"
+                                className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition"
+                            >
+                                <UserCircle2 size={20} /> الملف الشخصي
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            )}
+
+
+            {/* 👋 الترحيب */}
+            <div className="text-center space-y-2 bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-700 flex justify-center items-center gap-2">
+                    👋 مرحباً {fullName || 'عزيزي الطالب'}
+                </h1>
+                <p className="text-gray-700 text-base sm:text-lg font-medium">
+                    {dateTime.format('dddd، D MMMM YYYY')} – الساعة {dateTime.format('hh:mm')}
                 </p>
             </div>
 
+
             {/* روابط التنقل */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 {navItems.map((item, idx) => (
                     <Link
                         key={idx}
                         href={item.href}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl hover:bg-orange-500 hover:text-white transition text-center shadow-sm"
+                        className="group bg-white border border-gray-200 rounded-xl shadow-md p-4 flex flex-col items-center justify-center text-center transition-all hover:shadow-lg hover:border-orange-400 hover:bg-orange-50"
                     >
-                        {item.icon}
-                        <span className="text-sm font-semibold">{item.name}</span>
+                        <div className="bg-blue-100 group-hover:bg-orange-500 text-blue-700 group-hover:text-white rounded-full p-3 transition-all mb-2">
+                            {item.icon}
+                        </div>
+                        <span className="text-sm font-semibold text-gray-700 group-hover:text-orange-700">
+                            {item.name}
+                        </span>
                     </Link>
                 ))}
             </div>
+
         </div>
     );
 }

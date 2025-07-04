@@ -10,6 +10,7 @@ export default function AdminStudentsPage() {
     const [universities, setUniversities] = useState([]);
     const [locations, setLocations] = useState([]);
     const [filters, setFilters] = useState({ university: '', location: '', gender: '' });
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchAll();
@@ -61,9 +62,19 @@ export default function AdminStudentsPage() {
     };
 
     return (
-        <div className="p-4 text-right" dir="rtl">
+        <div className="min-w-0 text-right" >
             <h1 className="text-xl font-bold mb-6 text-blue-700">جميع الطلاب</h1>
 
+            {/* حقل البحث */}
+            <div className="mb-4 flex justify-start">
+                <input
+                    type="text"
+                    placeholder="ابحث باسم الطالب..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border px-4 py-2 min-w-0 rounded w-full sm:w-64"
+                />
+            </div>
             {/* الفلاتر */}
             <div className="grid sm:grid-cols-4 gap-4 mb-4">
                 <select
@@ -94,8 +105,8 @@ export default function AdminStudentsPage() {
                     className="border rounded p-2"
                 >
                     <option value="">الكل</option>
-                    <option value="male">ذكر</option>
-                    <option value="female">أنثى</option>
+                    <option value="female">طالبات</option>
+                    <option value="male">طلاب</option>
                 </select>
 
                 <button
@@ -118,26 +129,38 @@ export default function AdminStudentsPage() {
 
             {/* الجدول */}
             <div className="overflow-x-auto border rounded">
-                <table className="min-w-full text-sm text-right">
+                <table className="min-w-full text-sm text-center">
                     <thead className="bg-blue-100 text-blue-800">
                         <tr>
-                            <th className="p-2">الاسم</th>
-                            <th className="p-2">رقم الهاتف</th>
-                            <th className="p-2">الجنس</th>
-                            <th className="p-2">الجامعة</th>
-                            <th className="p-2">المنطقة</th>
+                            <th className="p-1">الاسم</th>
+                            <th className="p-1">رقم الهاتف</th>
+                            <th className="p-1">الجنس</th>
+                            <th className="p-1">الجامعة</th>
+                            <th className="p-1">المنطقة</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.map((s, i) => (
-                            <tr key={i} className="border-b hover:bg-gray-50">
-                                <td className="p-2">{s.full_name}</td>
-                                <td className="p-2">{s.phone || '-'}</td>
-                                <td className="p-2">{s.gender === 'male' ? 'ذكر' : 'أنثى'}</td>
-                                <td className="p-2">{s.universities?.name}</td>
-                                <td className="p-2">{s.locations?.name}</td>
-                            </tr>
-                        ))}
+                        {filtered
+                            .filter((s) =>
+                                s.full_name?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+                            )
+                            .map((s, i) => (
+                                <tr key={i} className="border-b hover:bg-orange-200">
+                                    <td className="p-1">{s.full_name}</td>
+                                    <td className="p-1">
+                                        {s.phone ? (
+                                            <a href={`tel:${s.phone}`} className="text-orange-600 hover:text-orange-800">
+                                                {s.phone}
+                                            </a>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </td>
+                                    <td className="p-1">{s.gender === 'male' ? 'طالب' : 'طالبة'}</td>
+                                    <td className="p-1">{s.universities?.name}</td>
+                                    <td className="p-1">{s.locations?.name}</td>
+                                </tr>
+                            ))}
                     </tbody>
                 </table>
             </div>

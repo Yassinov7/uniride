@@ -24,13 +24,36 @@ export default function CreateReturnRidePage() {
     }, []);
 
     // جلب الباصات مرة واحدة
+    // useEffect(() => {
+    //     const fetchBuses = async () => {
+    //         const { data } = await supabase.from('buses').select('*');
+    //         if (data) setBuses(data);
+    //     };
+    //     fetchBuses();
+    // }, []);
     useEffect(() => {
         const fetchBuses = async () => {
-            const { data } = await supabase.from('buses').select('*');
-            if (data) setBuses(data);
+            const { data: allBuses } = await supabase.from('buses').select('*');
+            if (!allBuses || !date) return;
+
+            const { data: usedRides } = await supabase
+                .from('rides')
+                .select('bus_id')
+                .eq('date', date)
+                .eq('route_type', 'return');
+
+            const unavailableIds = new Set(usedRides?.map(r => r.bus_id) || []);
+
+            const busesWithStatus = allBuses.map((b) => ({
+                ...b,
+                isUnavailable: unavailableIds.has(b.id),
+            }));
+
+            setBuses(busesWithStatus);
         };
+
         fetchBuses();
-    }, []);
+    }, [date]);
 
     // جلب الطلاب بمجرد تعيين التاريخ
     useEffect(() => {
@@ -49,7 +72,8 @@ export default function CreateReturnRidePage() {
           locations(name)
         )
       `)
-            .eq('date', date);
+            .eq('date', date)
+            .eq('assigned', false);
 
         setStudents(data || []);
     };
@@ -90,9 +114,10 @@ export default function CreateReturnRidePage() {
 
             await supabase
                 .from('return_candidates')
-                .delete()
+                .update({ assigned: true })
                 .in('student_id', selected)
                 .eq('date', date);
+
 
             toast.success('✅ تم إنشاء رحلة العودة بنجاح');
             setSelected([]);
@@ -114,7 +139,7 @@ export default function CreateReturnRidePage() {
             <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                     <label className="text-blue-700 font-semibold flex items-center gap-1"><Bus size={16} /> الباص</label>
-                    <select
+                    {/* <select
                         className="w-full border rounded p-2"
                         value={busId}
                         onChange={(e) => setBusId(e.target.value)}
@@ -123,7 +148,25 @@ export default function CreateReturnRidePage() {
                         {buses.map((b) => (
                             <option key={b.id} value={b.id}>{b.name}</option>
                         ))}
+                    </select> */}
+                    <select
+                        className="w-full border rounded p-2"
+                        value={busId}
+                        onChange={(e) => setBusId(e.target.value)}
+                    >
+                        <option value="">اختر باص</option>
+                        {buses.map((b) => (
+                            <option
+                                key={b.id}
+                                value={b.isUnavailable ? '' : b.id}
+                                disabled={b.isUnavailable}
+                                className={b.isUnavailable ? 'line-through text-gray-400' : ''}
+                            >
+                                {b.name} {b.isUnavailable ? ' (غير متاح)' : ''}
+                            </option>
+                        ))}
                     </select>
+
                 </div>
                 <div>
                     <label className="text-blue-700 font-semibold flex items-center gap-1"><Clock size={16} /> الساعة</label>

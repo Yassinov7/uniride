@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import {
-    LayoutDashboard,
     University,
     Bus,
     HomeIcon,
@@ -12,7 +11,7 @@ import {
     BadgeDollarSign,
     Inbox,
     Users,
-    FileDown,
+    BusFront,
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -20,17 +19,16 @@ import { supabase } from '@/lib/supabase';
 dayjs.locale('ar');
 
 const navItems = [
-    { name: 'الصفحة الرئيسية', href: '/admin', icon: <LayoutDashboard size={28} /> },
-    { name: 'الجامعات', href: '/admin/universities', icon: <University size={28} /> },
-    { name: 'الباصات', href: '/admin/buses', icon: <Bus size={28} /> },
-    { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={28} /> },
     { name: 'طلبات الحجز', href: '/admin/requests', icon: <Route size={28} /> },
-    { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={28} /> },
-    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={28} /> },
+    { name: 'إدارة الرحلات', href: '/admin/export', icon: <BusFront size={28} /> },
     { name: 'رحلات الذهاب', href: '/admin/rides/creatego', icon: <Route size={28} /> },
     { name: 'رحلات العودة', href: '/admin/rides/createreturn', icon: <Route size={28} /> },
     { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={28} /> },
-    { name: 'تصدير البيانات', href: '/admin/export', icon: <FileDown size={28} /> },
+    { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={28} /> },
+    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={28} /> },
+    { name: 'الباصات', href: '/admin/buses', icon: <Bus size={28} /> },
+    { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={28} /> },
+    { name: 'الجامعات', href: '/admin/universities', icon: <University size={28} /> },
 ];
 
 export default function AdminHomePage() {
@@ -66,23 +64,28 @@ export default function AdminHomePage() {
     return (
         <div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-lg shadow space-y-10" dir="rtl">
             {/* العنوان والترحيب */}
-            <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-blue-700">أهلاً بك يا {fullName || 'مشرف'} 👋</h1>
-                <p className="text-gray-600 text-lg">
+            <div className="text-center space-y-2 bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-700 flex justify-center items-center gap-2">
+                    أهلاً بك يا {fullName || 'مشرف'} 👋</h1>
+                <p className="text-gray-700 text-base sm:text-lg font-medium">
                     {dateTime.format('dddd، D MMMM YYYY')} - الساعة {dateTime.format('hh:mm')}
                 </p>
             </div>
 
             {/* روابط لوحة التحكم */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 {navItems.map((item, idx) => (
                     <Link
                         key={idx}
                         href={item.href}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl hover:bg-orange-500 hover:text-white transition text-center shadow-sm"
+                        className="group bg-white border border-gray-200 rounded-xl shadow-md p-4 flex flex-col items-center justify-center text-center transition-all hover:shadow-lg hover:border-orange-400 hover:bg-orange-50"
                     >
-                        {item.icon}
-                        <span className="text-sm font-semibold">{item.name}</span>
+                        <div className="bg-blue-100 group-hover:bg-orange-500 text-blue-700 group-hover:text-white rounded-full p-3 transition-all mb-2">
+                            {item.icon}
+                        </div>
+                        <span className="text-sm font-semibold text-gray-700 group-hover:text-orange-700">
+                            {item.name}
+                        </span>
                     </Link>
                 ))}
             </div>

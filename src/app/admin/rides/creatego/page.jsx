@@ -20,11 +20,35 @@ export default function CreateGoRidePage() {
 
     useEffect(() => {
         fetchBuses();
-    }, []);
+    }, [date]);
 
+    // const fetchBuses = async () => {
+    //     const { data } = await supabase.from('buses').select('*');
+    //     if (data) setBuses(data);
+    // };
     const fetchBuses = async () => {
-        const { data } = await supabase.from('buses').select('*');
-        if (data) setBuses(data);
+        const { data: allBuses } = await supabase.from('buses').select('*');
+        if (!allBuses) return;
+
+        if (!date) {
+            setBuses(allBuses.map(b => ({ ...b, isUnavailable: false })));
+            return;
+        }
+
+        const { data: usedRides } = await supabase
+            .from('rides')
+            .select('bus_id')
+            .eq('date', date)
+            .eq('route_type', 'go');
+
+        const unavailableIds = new Set(usedRides?.map(r => r.bus_id) || []);
+
+        const busesWithStatus = allBuses.map((b) => ({
+            ...b,
+            isUnavailable: unavailableIds.has(b.id),
+        }));
+
+        setBuses(busesWithStatus);
     };
 
     const fetchStudents = async () => {
@@ -227,12 +251,12 @@ export default function CreateGoRidePage() {
                         .update({ balance: currentBalance - fare })
                         .eq('student_id', student_id);
 
-                    // ✅ حذف الطلب بعد التوزيع
                     await supabase
                         .from('ride_requests')
-                        .delete()
+                        .update({ status: 'assigned' })
                         .eq('student_id', student_id)
                         .eq('date', rideDate);
+
                 }
             }
 
@@ -265,7 +289,7 @@ export default function CreateGoRidePage() {
                 </div>
                 <div>
                     <label className="font-semibold text-blue-700 flex items-center gap-1"><Bus size={16} /> الباص</label>
-                    <select
+                    {/* <select
                         className="w-full border rounded p-2"
                         value={busId}
                         onChange={(e) => setBusId(e.target.value)}
@@ -273,6 +297,23 @@ export default function CreateGoRidePage() {
                         <option value="">اختر باص</option>
                         {buses.map((b) => (
                             <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                    </select> */}
+                    <select
+                        className="w-full border rounded p-2"
+                        value={busId}
+                        onChange={(e) => setBusId(e.target.value)}
+                    >
+                        <option value="">اختر باص</option>
+                        {buses.map((b) => (
+                            <option
+                                key={b.id}
+                                value={b.isUnavailable ? '' : b.id}
+                                disabled={b.isUnavailable}
+                                className={b.isUnavailable ? 'line-through text-gray-400' : ''}
+                            >
+                                {b.name} {b.isUnavailable ? ' (غير متاح)' : ''}
+                            </option>
                         ))}
                     </select>
                 </div>

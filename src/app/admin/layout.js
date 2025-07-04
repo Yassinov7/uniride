@@ -1,19 +1,13 @@
 'use client';
 
-import CommonHeader from '@/components/CommonHeader';
-import Link from 'next/link';
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import CommonHeader from '@/components/CommonHeader';
 import {
-    X,
-    University,
-    Bus,
-    Route,
-    Users,
-    FileDown,
-    LayoutDashboard,
-    HomeIcon,
-    BadgeDollarSign,
-    Inbox
+    X, University, Bus, Route, Users, BusFront,
+    LayoutDashboard, HomeIcon, BadgeDollarSign, Inbox, LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -22,29 +16,32 @@ const navItems = [
     { name: 'الباصات', href: '/admin/buses', icon: <Bus size={18} /> },
     { name: 'المناطق السكنية', href: '/admin/locations', icon: <HomeIcon size={18} /> },
     { name: 'طلبات الحجز', href: '/admin/requests', icon: <Route size={18} /> },
-    { name: 'ارصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={18} /> },
-    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={18} /> },
+    { name: 'إدارة الرحلات', href: '/admin/managment', icon: <BusFront size={18} /> },
     { name: 'رحلات الذهاب', href: '/admin/rides/creatego', icon: <Route size={18} /> },
     { name: 'رحلات العودة', href: '/admin/rides/createreturn', icon: <Route size={18} /> },
     { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={18} /> },
-    { name: 'تصدير البيانات', href: '/admin/export', icon: <FileDown size={18} /> },
+    { name: 'أرصدة الطلاب', href: '/admin/wallets', icon: <BadgeDollarSign size={18} /> },
+    { name: 'سجل المعاملات', href: '/admin/wallets/history', icon: <Inbox size={18} /> },
 ];
 
 export default function AdminLayout({ children }) {
     const [open, setOpen] = useState(false);
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
 
     return (
         <div className="flex flex-col min-h-screen">
-            {/* Header المشترك */}
             <CommonHeader onMenuClick={() => setOpen(true)} />
 
             <div className="flex flex-1">
                 {/* Sidebar - Large Screens */}
                 <aside className="hidden md:flex flex-col w-64 bg-blue-600 text-white">
-                    <div className="p-6 text-xl font-bold border-b border-blue-500">
-                        لوحة التحكم
-                    </div>
-                    <nav className="flex-1 px-4 py-6 space-y-3">
+                    <div className="p-6 text-xl font-bold border-b border-blue-500">لوحة التحكم</div>
+                    <nav className="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
                         {navItems.map((item) => (
                             <Link
                                 key={item.href}
@@ -52,36 +49,33 @@ export default function AdminLayout({ children }) {
                                 className="flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-500 transition"
                             >
                                 {item.icon}
-                                <span className="text-white">{item.name}</span>
+                                <span>{item.name}</span>
                             </Link>
                         ))}
                     </nav>
-                    <Link
-                        href="/"
-                        className="bg-blue-700 py-3 text-center hover:bg-orange-500 transition"
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
                     >
-                        العودة للرئيسية
-                    </Link>
+                        <LogOut size={18} /> تسجيل خروج
+                    </button>
                 </aside>
 
                 {/* Mobile Drawer */}
                 {open && (
-                    <div
-                        className="fixed inset-0 z-40 bg-black/20"
-                        onClick={() => setOpen(false)}
-                    >
+                    <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setOpen(false)}>
                         <aside
-                            className="w-64 h-full bg-blue-600 text-white shadow-md p-4 fixed left-0 top-0 z-50"
+                            className="w-64 h-full bg-blue-600 text-white shadow-md fixed left-0 top-0 z-50 flex flex-col"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center p-4 border-b border-blue-400">
                                 <h2 className="font-bold text-xl">القائمة</h2>
                                 <button onClick={() => setOpen(false)}>
                                     <X size={24} />
                                 </button>
                             </div>
 
-                            <nav className="space-y-3">
+                            <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                                 {navItems.map((item) => (
                                     <Link
                                         key={item.href}
@@ -95,12 +89,15 @@ export default function AdminLayout({ children }) {
                                 ))}
                             </nav>
 
-                            <Link
-                                href="/"
-                                className="block mt-6 bg-blue-700 text-center rounded py-2 hover:bg-orange-500 transition"
+                            <button
+                                onClick={() => {
+                                    setOpen(false);
+                                    handleLogout();
+                                }}
+                                className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
                             >
-                                العودة للرئيسية
-                            </Link>
+                                <LogOut size={18} /> تسجيل خروج
+                            </button>
                         </aside>
                     </div>
                 )}

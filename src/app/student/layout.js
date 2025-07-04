@@ -1,8 +1,10 @@
 'use client';
 
-import CommonHeader from '@/components/CommonHeader';
-import Link from 'next/link';
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/store/userStore';
+import CommonHeader from '@/components/CommonHeader';
 import {
     X,
     LayoutDashboard,
@@ -13,15 +15,13 @@ import {
     UserCircle2,
     FileUp,
     ReceiptTextIcon,
-    CheckIcon,
-    BusIcon
+    LogOut
 } from 'lucide-react';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={18} /> },
     { name: 'الحجز', href: '/student/request', icon: <Bus size={18} /> },
     { name: 'رحلاتي', href: '/student/next', icon: <FileUp size={18} /> },
-    // { name: 'الحجز', href: '/student/booking', icon: <CheckIcon size={18} /> },
     { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={18} /> },
     { name: 'سجل الرحلات', href: '/student/history', icon: <ReceiptTextIcon size={18} /> },
     { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={18} /> },
@@ -31,10 +31,16 @@ const navItems = [
 
 export default function StudentLayout({ children }) {
     const [open, setOpen] = useState(false);
+    const router = useRouter();
+    const { clearUser } = useUserStore();
+
+    const handleLogout = () => {
+        clearUser();
+        router.push('/login');
+    };
 
     return (
         <div className="flex flex-col min-h-screen">
-            {/* Header المشترك */}
             <CommonHeader onMenuClick={() => setOpen(true)} />
 
             <div className="flex flex-1">
@@ -51,24 +57,22 @@ export default function StudentLayout({ children }) {
                                 className="flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-500 transition"
                             >
                                 {item.icon}
-                                <span className="text-white">{item.name}</span>
+                                <span>{item.name}</span>
                             </Link>
                         ))}
                     </nav>
-                    <Link
-                        href="/"
-                        className="bg-blue-700 py-3 text-center hover:bg-orange-500 transition"
+                    <button
+                        onClick={handleLogout}
+                        className="bg-orange-600 py-3 flex justify-center items-center gap-2 hover:bg-orange-700 transition w-full"
                     >
-                        العودة للرئيسية
-                    </Link>
+                        <LogOut size={18} />
+                        تسجيل الخروج
+                    </button>
                 </aside>
 
                 {/* Mobile Drawer */}
                 {open && (
-                    <div
-                        className="fixed inset-0 z-40 bg-black/20"
-                        onClick={() => setOpen(false)}
-                    >
+                    <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setOpen(false)}>
                         <aside
                             className="w-64 h-full bg-blue-600 text-white shadow-md p-4 fixed left-0 top-0 z-50"
                             onClick={(e) => e.stopPropagation()}
@@ -92,16 +96,19 @@ export default function StudentLayout({ children }) {
                                     </Link>
                                 ))}
                             </nav>
-                            <Link
-                                href="/"
-                                className="block mt-6 bg-blue-700 text-center rounded py-2 hover:bg-orange-500 transition"
+                            <button
+                                onClick={() => {
+                                    setOpen(false);
+                                    handleLogout();
+                                }}
+                                className="block mt-6 bg-orange-600 text-white rounded py-2 w-full hover:bg-orange-700 transition flex items-center justify-center gap-2"
                             >
-                                العودة للرئيسية
-                            </Link>
+                                <LogOut size={18} />
+                                تسجيل الخروج
+                            </button>
                         </aside>
                     </div>
                 )}
-
 
                 {/* Main Content */}
                 <main className="flex-1 bg-gray-100 p-6">{children}</main>

@@ -33,19 +33,20 @@ export default function CommonHeader({ onMenuClick }) {
           alt="UniRide"
           width={48}
           height={48}
+          className="rounded-full"
         />
-        <span className="text-xl font-bold text-blue-600">UniRide</span>
+        <span className="text-xl sm:text-xl font-bold text-blue-700">UniRide</span>
       </div>
 
       {/* التاريخ + زر القائمة */}
-      <div className="flex items-center gap-4 text-sm text-gray-700 font-medium">
+      <div className="flex items-center text-sm text-gray-700 font-medium">
         <span className="inline text-orange-500">{today}</span>
         <button
           onClick={onMenuClick}
-          className="md:hidden text-blue-600"
+          className="md:hidden p-2 rounded hover:bg-gray-100 transition"
           aria-label="القائمة"
         >
-          <Menu size={26} />
+          <Menu size={26} className="text-blue-700"/>
         </button>
       </div>
     </header>
