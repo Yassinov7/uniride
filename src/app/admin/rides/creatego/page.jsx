@@ -229,22 +229,28 @@ export default function CreateGoRidePage() {
                     const studentData = students.find((s) => s.student_id === student_id);
                     const fare = studentData.profiles.locations.fare;
 
-                    await supabase.from('ride_students').insert({ ride_id: ride.id, student_id });
-
-                    await supabase.from('wallet_transactions').insert({
-                        student_id,
-                        amount: -fare,
-                        description: 'أجرة رحلة ذهاب',
-                        created_by: user.id,
-                    });
-
-                    const { data: wallet } = await supabase
+                    // التحقق من وجود المحفظة
+                    const { data: wallet, error: walletError } = await supabase
                         .from('wallets')
                         .select('balance')
                         .eq('student_id', student_id)
                         .single();
 
-                    const currentBalance = wallet?.balance || 0;
+                    if (!wallet) {
+                        toast.error(`⛔ لا توجد محفظة للطالب: ${studentData.profiles.full_name}`);
+                        continue; // تخطي هذا الطالب
+                    }
+
+                    const currentBalance = wallet.balance || 0;
+
+                    await supabase.from('ride_students').insert({ ride_id: ride.id, student_id });
+
+                    await supabase.from('wallet_transactions').insert({
+                        student_id,
+                        amount: -fare,
+                        description: 'أجرة رحلة ذهاب/إياب',
+                        created_by: user.id,
+                    });
 
                     await supabase
                         .from('wallets')
@@ -256,8 +262,8 @@ export default function CreateGoRidePage() {
                         .update({ status: 'assigned' })
                         .eq('student_id', student_id)
                         .eq('date', rideDate);
-
                 }
+
             }
 
             toast.success('✅ تم إنشاء الرحلة بنجاح');
