@@ -104,7 +104,7 @@ export default function AdminRequestsPage() {
   const locations = [...new Set(requests.map((r) => r.profiles?.locations?.name || '—'))];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
+    <div className="max-w-6xl mx-auto mb-30 p-4 space-y-6">
       <h1 className="text-xl font-bold text-blue-600">طلبات الحجز</h1>
 
       {/* الفلاتر */}

@@ -119,7 +119,7 @@ export default function BusesPage() {
 
 
     return (
-        <div>
+        <div className="mb-30">
             <h1 className="text-xl font-bold text-blue-600 mb-4">الباصات</h1>
 
             {/* Form */}

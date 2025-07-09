@@ -286,7 +286,7 @@ export default function RidesManagement() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-4 space-y-6 text-right" dir="rtl">
+        <div className="max-w-4xl mx-auto mb-30 p-4 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <ListTree size={22} /> إدارة قوائم الرحلات
             </h1>

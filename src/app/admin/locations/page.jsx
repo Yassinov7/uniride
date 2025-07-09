@@ -106,7 +106,7 @@ export default function LocationsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mb-30">
             <h1 className="text-xl font-bold text-blue-600">إدارة المناطق السكنية</h1>
 
             <div className="flex justify-end">
