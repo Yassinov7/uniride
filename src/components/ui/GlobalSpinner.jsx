@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useLoadingStore } from '@/store/loadingStore';
-import { Bus, Bus } from 'lucide-react';
+import { Bus } from 'lucide-react';
 
 export default function GlobalSpinner() {
   const isLoading = useLoadingStore((state) => state.isLoading);
