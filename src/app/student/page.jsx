@@ -1,5 +1,6 @@
 'use client';
 
+import { useLoadingStore } from '@/store/LoadingStore';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
@@ -33,7 +34,7 @@ export default function StudentHomePage() {
     const [fullName, setFullName] = useState('');
     const [needsWallet, setNeedsWallet] = useState(false);
     const [needsProfileUpdate, setNeedsProfileUpdate] = useState(false);
-    const [loadingCheck, setLoadingCheck] = useState(true); // 💡 مهم لإخفاء التنبيه أثناء التحقق
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         const interval = setInterval(() => setDateTime(dayjs()), 1000);
@@ -42,49 +43,48 @@ export default function StudentHomePage() {
 
     useEffect(() => {
         const fetchInfo = async () => {
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData?.user?.id;
-            if (!userId) return;
+            setLoading(true); // 👈 بدء التحميل
 
-            // جلب الاسم والبيانات الشخصية
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name, university_id, location_id, gender')
-                .eq('id', userId)
-                .single();
+            try {
+                const { data: userData } = await supabase.auth.getUser();
+                const userId = userData?.user?.id;
+                if (!userId) return;
 
-            if (profile?.full_name) setFullName(profile.full_name);
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, university_id, location_id, gender')
+                    .eq('id', userId)
+                    .single();
 
-            if (
-                !profile?.university_id ||
-                !profile?.location_id ||
-                !profile?.gender
-            ) {
-                setNeedsProfileUpdate(true);
+                if (profile?.full_name) setFullName(profile.full_name);
+
+                if (!profile?.university_id || !profile?.location_id || !profile?.gender) {
+                    setNeedsProfileUpdate(true);
+                }
+
+                const { data: wallet } = await supabase
+                    .from('wallets')
+                    .select('student_id, balance')
+                    .eq('student_id', userId)
+                    .single();
+
+                if (!wallet || wallet.balance < 0) {
+                    setNeedsWallet(true);
+                }
+            } finally {
+                setLoading(false); // ✅ انتهاء التحميل
             }
-
-            // جلب المحفظة
-            const { data: wallet } = await supabase
-                .from('wallets')
-                .select('student_id')
-                .eq('student_id', userId)
-                .single();
-
-            if (!wallet || wallet.balance < 0) {
-                setNeedsWallet(true);
-            }
-
-            setLoadingCheck(false); // ✅ بعد انتهاء الفحص
         };
 
         fetchInfo();
     }, []);
 
+
     return (
         <div className="max-w-5xl mx-auto mt-8 p-6 bg-white rounded-lg shadow space-y-10" dir="rtl">
 
             {/* ✅ تنبيه إرشادي للطالب */}
-            {!loadingCheck && (needsWallet || needsProfileUpdate) && (
+            {(needsWallet || needsProfileUpdate) && (
                 <div className="bg-yellow-50 border border-yellow-400 rounded-lg p-4 shadow flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-yellow-800 font-semibold text-lg">
                         <span className="animate-pulse text-yellow-500"><FileWarning size={26} /></span>

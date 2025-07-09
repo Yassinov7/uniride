@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
+import GlobalSpinner from '@/components/ui/GlobalSpinner';
 
 
 export default function RootLayout({ children }) {
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
 
       <body>
         <Toaster position="top-center" reverseOrder={false} />
+        <GlobalSpinner />
         {children}
       </body>
     </html>

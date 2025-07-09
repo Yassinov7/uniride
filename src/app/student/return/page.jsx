@@ -5,54 +5,60 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { Calendar, Clock, BusFront } from 'lucide-react';
+import { useLoadingStore } from '@/store/LoadingStore';
 
 export default function ReturnRidePage() {
     const [booking, setBooking] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchReturnRide();
     }, []);
 
     const fetchReturnRide = async () => {
-        const { data: userData } = await supabase.auth.getUser();
-        const studentId = userData?.user?.id;
+        setLoading(true); // 🌀 إظهار الـ spinner
 
-        if (!studentId) {
-            toast.error('لم يتم التعرف على المستخدم');
-            return;
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const studentId = userData?.user?.id;
+
+            if (!studentId) {
+                toast.error('لم يتم التعرف على المستخدم');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('ride_students')
+                .select(`
+                ride_id (
+                    id,
+                    date,
+                    time,
+                    route_type
+                )
+            `)
+                .eq('student_id', studentId);
+
+            if (error) {
+                toast.error('فشل تحميل البيانات');
+                return;
+            }
+
+            const now = dayjs();
+
+            const returnRides = data
+                .filter(r => r.ride_id?.route_type === 'return')
+                .map(r => ({
+                    ...r,
+                    rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`)
+                }))
+                .filter(r => r.rideDateTime.isAfter(now.startOf('day')))
+                .sort((a, b) => a.rideDateTime - b.rideDateTime);
+
+            setBooking(returnRides[0] || null);
+        } finally {
+            setLoading(false); // ✅ إخفاء الـ spinner
         }
-
-        const { data, error } = await supabase
-            .from('ride_students')
-            .select(`
-      ride_id (
-        id,
-        date,
-        time,
-        route_type
-      )
-    `)
-            .eq('student_id', studentId);
-
-        if (error) {
-            toast.error('فشل تحميل البيانات');
-            return;
-        }
-
-        const now = dayjs();
-
-        const returnRides = data
-            .filter(r => r.ride_id?.route_type === 'return')
-            .map(r => ({
-                ...r,
-                rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`)
-            }))
-            .filter(r => r.rideDateTime.isAfter(now.startOf('day')))
-            .sort((a, b) => a.rideDateTime - b.rideDateTime);
-
-        setBooking(returnRides[0] || null);
-        setLoading(false);
     };
 
 
@@ -60,9 +66,7 @@ export default function ReturnRidePage() {
         <div className="max-w-lg mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-4">
             <h1 className="text-xl font-bold text-blue-600 text-center">رحلة العودة القادمة</h1>
 
-            {loading ? (
-                <p className="text-center text-gray-500">جاري التحميل...</p>
-            ) : booking ? (
+            {booking ? (
                 <div className="space-y-3 text-center">
                     <div className="flex justify-center gap-2 items-center text-gray-700">
                         <Calendar size={20} className="text-orange-500" />

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { PlusCircle, X } from 'lucide-react';
+import { useLoadingStore } from '@/store/LoadingStore';
 
 export default function BusesPage() {
     const [buses, setBuses] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
     const [name, setName] = useState('');
@@ -17,18 +18,17 @@ export default function BusesPage() {
     const [editingBus, setEditingBus] = useState(null);
 
     const fetchBuses = async () => {
+        setLoading(true); // ✅ تشغيل التحميل
+
         const { data, error } = await supabase
             .from('buses')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (!error) setBuses(data);
-        setLoading(false);
-    };
 
-    useEffect(() => {
-        fetchBuses();
-    }, []);
+        setLoading(false); // ✅ إيقاف التحميل
+    };
 
     const handleAdd = async () => {
         if (!name || !capacity) {
@@ -36,11 +36,15 @@ export default function BusesPage() {
             return;
         }
 
+        setLoading(true);
+
         const { error } = await supabase.from('buses').insert({
             name,
             capacity: Number(capacity),
             driver_name: driverName || null,
         });
+
+        setLoading(false);
 
         if (error) {
             toast.error('فشل في الإضافة');
@@ -53,8 +57,14 @@ export default function BusesPage() {
         }
     };
 
+
     const handleDelete = async (id) => {
+        setLoading(true);
+
         const { error } = await supabase.from('buses').delete().eq('id', id);
+
+        setLoading(false);
+
         if (error) toast.error('فشل الحذف');
         else {
             toast.success('تم الحذف');
@@ -62,11 +72,14 @@ export default function BusesPage() {
         }
     };
 
+
     const handleUpdate = async () => {
         if (!editingBus.name || !editingBus.capacity) {
             toast.error('يرجى تعبئة جميع الحقول');
             return;
         }
+
+        setLoading(true);
 
         const { error } = await supabase
             .from('buses')
@@ -77,6 +90,8 @@ export default function BusesPage() {
             })
             .eq('id', editingBus.id);
 
+        setLoading(false);
+
         if (error) toast.error('فشل التحديث');
         else {
             toast.success('تم التحديث');
@@ -84,6 +99,7 @@ export default function BusesPage() {
             fetchBuses();
         }
     };
+
 
     return (
         <div>
