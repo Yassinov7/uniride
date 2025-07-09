@@ -1,6 +1,6 @@
 'use client';
 
-import { useLoadingStore } from '@/store/LoadingStore';
+import { useLoadingStore } from '@/store/loadingStore';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';

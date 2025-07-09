@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { PlusCircle, X } from 'lucide-react';
-import { useLoadingStore } from '@/store/LoadingStore';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function BusesPage() {
     const [buses, setBuses] = useState([]);

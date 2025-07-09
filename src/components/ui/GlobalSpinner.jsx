@@ -1,5 +1,5 @@
 'use client';
-import { useLoadingStore } from '@/store/LoadingStore';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function GlobalSpinner() {
   const isLoading = useLoadingStore((state) => state.isLoading);

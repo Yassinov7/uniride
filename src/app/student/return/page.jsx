@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { Calendar, Clock, BusFront } from 'lucide-react';
-import { useLoadingStore } from '@/store/LoadingStore';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function ReturnRidePage() {
     const [booking, setBooking] = useState(null);
