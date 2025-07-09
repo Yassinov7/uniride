@@ -19,10 +19,11 @@ export default function AdminRequestsPage() {
   }, []);
 
   const fetchRequests = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('ride_requests')
-      .select(`
+    setLoading(true); // ← البداية
+    try {
+      const { data, error } = await supabase
+        .from('ride_requests')
+        .select(`
         id, date, group_id, status, created_at,
         profiles (
           full_name, gender,
@@ -30,28 +31,47 @@ export default function AdminRequestsPage() {
           locations ( name )
         )
       `)
-      .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
-    if (!error && data) setRequests(data);
-
-    setLoading(false);
+      if (error) {
+        toast.error('حدث خطأ أثناء جلب الطلبات');
+        console.error(error);
+      } else {
+        setRequests(data);
+      }
+    } catch (err) {
+      toast.error('فشل غير متوقع');
+      console.error(err);
+    } finally {
+      setLoading(false); // ← مهما حصل، نوقف التحميل
+    }
   };
+
 
   const handleAction = async (groupId, action) => {
     setLoading(true);
-    const { error } = await supabase
-      .from('ride_requests')
-      .update({ status: action })
-      .eq('group_id', groupId);
+    try {
+      const { error } = await supabase
+        .from('ride_requests')
+        .update({ status: action })
+        .eq('group_id', groupId);
 
-    if (!error) {
-      setRequests((prev) =>
-        prev.map((r) => (r.group_id === groupId ? { ...r, status: action } : r))
-      );
+      if (!error) {
+        setRequests((prev) =>
+          prev.map((r) => (r.group_id === groupId ? { ...r, status: action } : r))
+        );
+      } else {
+        toast.error('فشل في تحديث الطلب');
+        console.error(error);
+      }
+    } catch (err) {
+      toast.error('حدث خطأ أثناء المعالجة');
+      console.error(err);
+    } finally {
+      setLoading(false); // هذا هو المهم
     }
-    
-    setLoading(false);
   };
+
 
   const uniqueGroups = [...new Set(requests.map((r) => r.group_id))];
 

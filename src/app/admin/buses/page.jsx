@@ -18,17 +18,23 @@ export default function BusesPage() {
     const [editingBus, setEditingBus] = useState(null);
 
     const fetchBuses = async () => {
-        setLoading(true); // ✅ تشغيل التحميل
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('buses')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        const { data, error } = await supabase
-            .from('buses')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!error) setBuses(data);
-
-        setLoading(false); // ✅ إيقاف التحميل
+            if (error) throw error;
+            setBuses(data);
+        } catch (err) {
+            console.error(err);
+            toast.error('حدث خطأ أثناء جلب الباصات');
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     useEffect(() => {
         fetchBuses();
@@ -41,39 +47,44 @@ export default function BusesPage() {
         }
 
         setLoading(true);
+        try {
+            const { error } = await supabase.from('buses').insert({
+                name,
+                capacity: Number(capacity),
+                driver_name: driverName || null,
+            });
 
-        const { error } = await supabase.from('buses').insert({
-            name,
-            capacity: Number(capacity),
-            driver_name: driverName || null,
-        });
+            if (error) throw error;
 
-        setLoading(false);
-
-        if (error) {
-            toast.error('فشل في الإضافة');
-        } else {
             toast.success('تمت الإضافة');
             setName('');
             setCapacity('');
             setDriverName('');
-            fetchBuses();
+            await fetchBuses();
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل في الإضافة');
+        } finally {
+            setLoading(false);
         }
     };
+
 
     const handleDelete = async (id) => {
         setLoading(true);
-
-        const { error } = await supabase.from('buses').delete().eq('id', id);
-
-        setLoading(false);
-
-        if (error) toast.error('فشل الحذف');
-        else {
+        try {
+            const { error } = await supabase.from('buses').delete().eq('id', id);
+            if (error) throw error;
             toast.success('تم الحذف');
-            fetchBuses();
+            await fetchBuses();
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل الحذف');
+        } finally {
+            setLoading(false);
         }
     };
+
 
 
     const handleUpdate = async () => {
@@ -83,25 +94,29 @@ export default function BusesPage() {
         }
 
         setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('buses')
+                .update({
+                    name: editingBus.name,
+                    capacity: Number(editingBus.capacity),
+                    driver_name: editingBus.driver_name || null,
+                })
+                .eq('id', editingBus.id);
 
-        const { error } = await supabase
-            .from('buses')
-            .update({
-                name: editingBus.name,
-                capacity: Number(editingBus.capacity),
-                driver_name: editingBus.driver_name || null,
-            })
-            .eq('id', editingBus.id);
+            if (error) throw error;
 
-        setLoading(false);
-
-        if (error) toast.error('فشل التحديث');
-        else {
             toast.success('تم التحديث');
             setEditingBus(null);
-            fetchBuses();
+            await fetchBuses();
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل التحديث');
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div>

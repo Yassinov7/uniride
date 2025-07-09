@@ -18,21 +18,23 @@ export default function LocationsPage() {
     }, []);
 
     const fetchLocations = async () => {
-        setLoading(true); // ⏳ بدء التحميل
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        const { data, error } = await supabase
-            .from('locations')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            toast.error('حدث خطأ في جلب المناطق');
-        } else {
+            if (error) throw error;
             setLocations(data);
+        } catch (err) {
+            console.error(err);
+            toast.error('حدث خطأ أثناء جلب المناطق');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false); // ✅ انتهاء التحميل
     };
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -48,45 +50,53 @@ export default function LocationsPage() {
 
         setLoading(true);
 
-        if (editingLocation) {
-            const { error } = await supabase
-                .from('locations')
-                .update({ name, fare: Number(fare) })
-                .eq('id', editingLocation.id);
+        try {
+            if (editingLocation) {
+                const { error } = await supabase
+                    .from('locations')
+                    .update({ name, fare: Number(fare) })
+                    .eq('id', editingLocation.id);
 
-            if (error) toast.error('فشل التعديل');
-            else toast.success('تم التعديل بنجاح');
-        } else {
-            const { error } = await supabase
-                .from('locations')
-                .insert({ name, fare: Number(fare) });
+                if (error) throw error;
+                toast.success('تم التعديل بنجاح');
+            } else {
+                const { error } = await supabase
+                    .from('locations')
+                    .insert({ name, fare: Number(fare) });
 
-            if (error) toast.error('فشل الإضافة');
-            else toast.success('تمت الإضافة بنجاح');
+                if (error) throw error;
+                toast.success('تمت الإضافة بنجاح');
+            }
+
+            setForm({ name: '', fare: '' });
+            setEditingLocation(null);
+            setShowForm(false);
+            await fetchLocations();
+        } catch (err) {
+            console.error(err);
+            toast.error('حدث خطأ أثناء حفظ البيانات');
+        } finally {
+            setLoading(false);
         }
-
-        setForm({ name: '', fare: '' });
-        setEditingLocation(null);
-        setShowForm(false);
-        await fetchLocations();
-
-        setLoading(false);
     };
+
 
 
     const handleDelete = async (id) => {
         setLoading(true);
-
-        const { error } = await supabase.from('locations').delete().eq('id', id);
-
-        if (error) toast.error('فشل الحذف');
-        else {
+        try {
+            const { error } = await supabase.from('locations').delete().eq('id', id);
+            if (error) throw error;
             toast.success('تم الحذف');
             await fetchLocations();
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل الحذف');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
+
 
 
     const startEdit = (location) => {

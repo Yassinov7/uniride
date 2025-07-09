@@ -20,7 +20,7 @@ dayjs.locale('ar');
 
 const navItems = [
     { name: 'طلبات الحجز', href: '/admin/requests', icon: <Route size={28} /> },
-    { name: 'إدارة الرحلات', href: '/admin/export', icon: <BusFront size={28} /> },
+    { name: 'إدارة الرحلات', href: '/admin/manage', icon: <BusFront size={28} /> },
     { name: 'رحلات الذهاب', href: '/admin/rides/creatego', icon: <Route size={28} /> },
     { name: 'رحلات العودة', href: '/admin/rides/createreturn', icon: <Route size={28} /> },
     { name: 'سجل الطلاب', href: '/admin/users', icon: <Users size={28} /> },

@@ -52,80 +52,83 @@ export default function RidesManagement() {
         });
 
         if (!result.isConfirmed) return;
-        setLoading(true);
+        setLoading(true); // ← فقط بعد التأكيد
         const shouldRefund = result.value;
-        const studentId = student.student_id;
-        const { route_type, date, id: ride_id } = selectedRide;
 
-        // 1. حذف الربط من ride_students
-        const { error: removeError } = await supabase
-            .from('ride_students')
-            .delete()
-            .eq('ride_id', ride_id)
-            .eq('student_id', student.student_id);
+        try {
+            // حذف الطالب
+            const { error: removeError } = await supabase
+                .from('ride_students')
+                .delete()
+                .eq('ride_id', selectedRide.id)
+                .eq('student_id', student.student_id);
 
-        if (removeError) {
-            toast.error('❌ فشل في إزالة الطالب من الرحلة');
-            return;
-        }
-
-        // 2. تحديث حالته في جدول الطلبات (حسب نوع الرحلة)
-        if (route_type === 'go') {
-            await supabase
-                .from('ride_requests')
-                .update({ status: 'approved' }) // لإعادة ظهوره في صفحة التوزيع
-                .eq('student_id', student.student_id)
-                .eq('date', date);
-        } else if (route_type === 'return') {
-            await supabase
-                .from('return_candidates')
-                .update({ assigned: false }) // لإعادة ظهوره في قائمة العودة
-                .eq('student_id', student.student_id)
-                .eq('date', date);
-        }
-
-        if (shouldRefund) {
-            // جلب أجرة المنطقة
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('location_id')
-                .eq('id', studentId)
-                .single();
-
-            const { data: location } = await supabase
-                .from('locations')
-                .select('fare')
-                .eq('id', profile?.location_id)
-                .single();
-
-            const fare = +location?.fare || 0;
-
-            // التحقق من وجود محفظة
-            const { data: wallet } = await supabase
-                .from('wallets')
-                .select('balance')
-                .eq('student_id', studentId)
-                .single();
-
-            if (wallet) {
-                // تعديل الرصيد
-                await supabase
-                    .from('wallets')
-                    .update({ balance: wallet.balance + fare })
-                    .eq('student_id', studentId);
+            if (removeError) {
+                toast.error('❌ فشل في إزالة الطالب من الرحلة');
+                return;
             }
 
+            // تحديث حالة الطالب حسب نوع الرحلة
+            if (selectedRide.route_type === 'go') {
+                await supabase
+                    .from('ride_requests')
+                    .update({ status: 'approved' })
+                    .eq('student_id', student.student_id)
+                    .eq('date', selectedRide.date);
+            } else {
+                await supabase
+                    .from('return_candidates')
+                    .update({ assigned: false })
+                    .eq('student_id', student.student_id)
+                    .eq('date', selectedRide.date);
+            }
 
-            await supabase.from('wallet_transactions').insert({
-                student_id: studentId,
-                amount: fare,
-                description: 'استرداد رصيد بعد الحذف من الرحلة',
-                created_by: user?.id, // ← ID المشرف الحالي
-            });
+            // استرداد الرصيد
+            if (shouldRefund) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('location_id')
+                    .eq('id', student.student_id)
+                    .single();
+
+                const { data: location } = await supabase
+                    .from('locations')
+                    .select('fare')
+                    .eq('id', profile?.location_id)
+                    .single();
+
+                const fare = +location?.fare || 0;
+
+                const { data: wallet } = await supabase
+                    .from('wallets')
+                    .select('balance')
+                    .eq('student_id', student.student_id)
+                    .single();
+
+                if (wallet) {
+                    await supabase
+                        .from('wallets')
+                        .update({ balance: wallet.balance + fare })
+                        .eq('student_id', student.student_id);
+                }
+
+                await supabase.from('wallet_transactions').insert({
+                    student_id: student.student_id,
+                    amount: fare,
+                    description: 'استرداد رصيد بعد الحذف من الرحلة',
+                    created_by: user?.id,
+                });
+            }
+
+            toast.success('✅ تم الحذف' + (shouldRefund ? ' مع استرداد الرصيد' : ''));
+            fetchRides();
+            setSelectedRide(null);
+        } catch (err) {
+            console.error(err);
+            toast.error('❌ فشل غير متوقع أثناء الحذف');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-        toast.success('✅ تم الحذف' + (shouldRefund ? ' مع استرداد الرصيد' : '')); fetchRides(); // إعادة تحميل بيانات الرحلة
-        setSelectedRide(null); // إغلاق المودال لتحديثه
     };
     const fetchAddableStudents = async () => {
         if (!selectedRide) return;
@@ -225,31 +228,37 @@ export default function RidesManagement() {
 
     const handleAddStudentToRide = async (studentId) => {
         setLoading(true);
-        await supabase.from('ride_students').insert({
-            ride_id: selectedRide.id,
-            student_id: studentId,
-        });
+        try {
+            await supabase.from('ride_students').insert({
+                ride_id: selectedRide.id,
+                student_id: studentId,
+            });
 
-        // تحديث الحالة في الطلب الأصلي
-        if (selectedRide.route_type === 'go') {
-            await supabase
-                .from('ride_requests')
-                .update({ status: 'assigned' })
-                .eq('student_id', studentId)
-                .eq('date', selectedRide.date);
-        } else {
-            await supabase
-                .from('return_candidates')
-                .update({ assigned: true })
-                .eq('student_id', studentId)
-                .eq('date', selectedRide.date);
+            if (selectedRide.route_type === 'go') {
+                await supabase
+                    .from('ride_requests')
+                    .update({ status: 'assigned' })
+                    .eq('student_id', studentId)
+                    .eq('date', selectedRide.date);
+            } else {
+                await supabase
+                    .from('return_candidates')
+                    .update({ assigned: true })
+                    .eq('student_id', studentId)
+                    .eq('date', selectedRide.date);
+            }
+
+            toast.success('✅ تم إضافة الطالب');
+            fetchRides();
+            setShowAddModal(false);
+        } catch (err) {
+            console.error(err);
+            toast.error('❌ حدث خطأ أثناء الإضافة');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
-        toast.success('✅ تم إضافة الطالب');
-        fetchRides();
-        setShowAddModal(false);
     };
+
 
     const exportExcel = (ride) => {
         const rideInfoRow = [
