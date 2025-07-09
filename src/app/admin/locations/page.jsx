@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PlusCircle, Pencil, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function LocationsPage() {
     const [locations, setLocations] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
     const [showForm, setShowForm] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
     const [form, setForm] = useState({ name: '', fare: '' });
@@ -17,7 +18,8 @@ export default function LocationsPage() {
     }, []);
 
     const fetchLocations = async () => {
-        setLoading(true);
+        setLoading(true); // ⏳ بدء التحميل
+
         const { data, error } = await supabase
             .from('locations')
             .select('*')
@@ -28,7 +30,8 @@ export default function LocationsPage() {
         } else {
             setLocations(data);
         }
-        setLoading(false);
+
+        setLoading(false); // ✅ انتهاء التحميل
     };
 
     const handleChange = (e) => {
@@ -42,6 +45,8 @@ export default function LocationsPage() {
             toast.error('يرجى تعبئة جميع الحقول بشكل صحيح');
             return;
         }
+
+        setLoading(true);
 
         if (editingLocation) {
             const { error } = await supabase
@@ -63,17 +68,26 @@ export default function LocationsPage() {
         setForm({ name: '', fare: '' });
         setEditingLocation(null);
         setShowForm(false);
-        fetchLocations();
+        await fetchLocations();
+
+        setLoading(false);
     };
 
+
     const handleDelete = async (id) => {
+        setLoading(true);
+
         const { error } = await supabase.from('locations').delete().eq('id', id);
+
         if (error) toast.error('فشل الحذف');
         else {
             toast.success('تم الحذف');
-            fetchLocations();
+            await fetchLocations();
         }
+
+        setLoading(false);
     };
+
 
     const startEdit = (location) => {
         setForm({ name: location.name, fare: location.fare });
@@ -99,9 +113,7 @@ export default function LocationsPage() {
                 </button>
             </div>
 
-            {loading ? (
-                <p>جاري التحميل...</p>
-            ) : locations.length === 0 ? (
+            {locations.length === 0 ? (
                 <p className="text-gray-500">لا توجد مناطق بعد.</p>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">

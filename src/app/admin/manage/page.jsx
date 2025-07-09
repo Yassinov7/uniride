@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
+import { useLoadingStore } from '@/store/loadingStore';
 
 
 dayjs.locale('ar');
@@ -23,6 +24,7 @@ export default function RidesManagement() {
     const [availableRides, setAvailableRides] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [availableStudents, setAvailableStudents] = useState([]);
+    const { setLoading } = useLoadingStore();
 
 
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function RidesManagement() {
         });
 
         if (!result.isConfirmed) return;
-
+        setLoading(true);
         const shouldRefund = result.value;
         const studentId = student.student_id;
         const { route_type, date, id: ride_id } = selectedRide;
@@ -121,7 +123,7 @@ export default function RidesManagement() {
                 created_by: user?.id, // ← ID المشرف الحالي
             });
         }
-
+        setLoading(false);
         toast.success('✅ تم الحذف' + (shouldRefund ? ' مع استرداد الرصيد' : '')); fetchRides(); // إعادة تحميل بيانات الرحلة
         setSelectedRide(null); // إغلاق المودال لتحديثه
     };
@@ -172,6 +174,7 @@ export default function RidesManagement() {
     };
 
     const handleTransferStudent = async (toRideId) => {
+        setLoading(true);
         // 1. إزالة الطالب من الرحلة الحالية
         await supabase
             .from('ride_students')
@@ -184,6 +187,8 @@ export default function RidesManagement() {
             .from('ride_students')
             .insert({ ride_id: toRideId, student_id: studentToMove.student_id });
 
+
+        setLoading(false);
         toast.success('✅ تم نقل الطالب بنجاح');
         fetchRides();
         setSelectedRide(null);
@@ -191,6 +196,8 @@ export default function RidesManagement() {
     };
 
     const fetchRides = async () => {
+        setLoading(true);
+
         const { data: ridesData } = await supabase
             .from('rides')
             .select('id, date, time, route_type, buses(name)')
@@ -212,9 +219,12 @@ export default function RidesManagement() {
         );
 
         setRides(ridesWithStudents);
+        setLoading(false);
     };
 
+
     const handleAddStudentToRide = async (studentId) => {
+        setLoading(true);
         await supabase.from('ride_students').insert({
             ride_id: selectedRide.id,
             student_id: studentId,
@@ -235,6 +245,7 @@ export default function RidesManagement() {
                 .eq('date', selectedRide.date);
         }
 
+        setLoading(false);
         toast.success('✅ تم إضافة الطالب');
         fetchRides();
         setShowAddModal(false);

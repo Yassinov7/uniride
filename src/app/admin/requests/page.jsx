@@ -4,18 +4,22 @@ import { supabase } from '@/lib/supabase';
 import { Check, X, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
+import { useLoadingStore } from '@/store/loadingStore';
 
 dayjs.locale('ar');
 
 export default function AdminRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [filters, setFilters] = useState({ university: '', location: '', gender: '' });
+  const { setLoading } = useLoadingStore();
+
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
   const fetchRequests = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('ride_requests')
       .select(`
@@ -29,9 +33,12 @@ export default function AdminRequestsPage() {
       .order('created_at', { ascending: false });
 
     if (!error && data) setRequests(data);
+
+    setLoading(false);
   };
 
   const handleAction = async (groupId, action) => {
+    setLoading(true);
     const { error } = await supabase
       .from('ride_requests')
       .update({ status: action })
@@ -42,6 +49,8 @@ export default function AdminRequestsPage() {
         prev.map((r) => (r.group_id === groupId ? { ...r, status: action } : r))
       );
     }
+    
+    setLoading(false);
   };
 
   const uniqueGroups = [...new Set(requests.map((r) => r.group_id))];
