@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
-import { useLoadingStore } from '@/store/loadingStore';
 
 export default function Register() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { isLoading, setLoading } = useLoadingStore();
+    const [loading, setLoading] = useState(false);
 
 
     const handleRegister = async () => {
@@ -59,9 +58,10 @@ export default function Register() {
 
                 <button
                     onClick={handleRegister}
+                    disabled={loading}
                     className="bg-orange-500 text-white rounded w-full p-2 mb-4"
                 >
-                    {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
+                    {loading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
                 </button>
 
                 <div className="flex justify-between text-sm">

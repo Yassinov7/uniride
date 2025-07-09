@@ -5,32 +5,25 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
-import { useLoadingStore } from '@/store/loadingStore';
 
 
 export default function Login() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { isLoading, setLoading } = useLoadingStore();
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         setLoading(true);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                toast.error(error.message);
-            } else {
-                router.push('/auth-redirect');
-            }
-        } catch (err) {
-            toast.error('حدث خطأ أثناء تسجيل الدخول');
-            console.error(err);
-        } finally {
-            setLoading(false);
+        if (error) {
+            toast.error(error.message);
+        } else {
+            router.push('/auth-redirect');
         }
+
+        setLoading(false);
     };
 
 
@@ -58,10 +51,10 @@ export default function Login() {
 
                 <button
                     onClick={handleLogin}
-                    disabled={isLoading}
+                    disabled={loading}
                     className="bg-blue-600 text-white rounded w-full p-2 mb-4"
                 >
-                    {isLoading ? 'جاري التسجيل...' : 'تسجيل الدخول'}
+                    {loading ? 'جاري الدخول...' : 'دخول'}
                 </button>
 
                 <div className="flex justify-between text-sm">
