@@ -5,22 +5,35 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function Register() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { isLoading, setLoading } = useLoadingStore();
+
 
     const handleRegister = async () => {
-        const { error } = await supabase.auth.signUp({ email, password });
+        setLoading(true);
 
-        if (error) {
-            toast.error(error.message);
-        } else {
-            toast.success('تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني!');
-            router.push('/login');
+        try {
+            const { error } = await supabase.auth.signUp({ email, password });
+
+            if (error) {
+                toast.error(error.message);
+            } else {
+                toast.success('تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني!');
+                router.push('/login');
+            }
+        } catch (err) {
+            toast.error('حدث خطأ أثناء إنشاء الحساب');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -48,7 +61,7 @@ export default function Register() {
                     onClick={handleRegister}
                     className="bg-orange-500 text-white rounded w-full p-2 mb-4"
                 >
-                    إنشاء حساب
+                    {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
                 </button>
 
                 <div className="flex justify-between text-sm">

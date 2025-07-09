@@ -5,6 +5,7 @@ import { Bus, Clock, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
+import { useLoadingStore } from '@/store/loadingStore';
 
 dayjs.locale('ar');
 
@@ -15,7 +16,7 @@ export default function CreateReturnRidePage() {
     const [buses, setBuses] = useState([]);
     const [busId, setBusId] = useState('');
     const [time, setTime] = useState('13:30');
-    const [loading, setLoading] = useState(false);
+    const { isLoading, setLoading } = useLoadingStore();
 
     // تعيين تاريخ اليوم تلقائيًا
     useEffect(() => {
@@ -23,14 +24,6 @@ export default function CreateReturnRidePage() {
         setDate(today);
     }, []);
 
-    // جلب الباصات مرة واحدة
-    // useEffect(() => {
-    //     const fetchBuses = async () => {
-    //         const { data } = await supabase.from('buses').select('*');
-    //         if (data) setBuses(data);
-    //     };
-    //     fetchBuses();
-    // }, []);
     useEffect(() => {
         const fetchBuses = async () => {
             const { data: allBuses } = await supabase.from('buses').select('*');
@@ -118,7 +111,6 @@ export default function CreateReturnRidePage() {
                 .in('student_id', selected)
                 .eq('date', date);
 
-
             toast.success('✅ تم إنشاء رحلة العودة بنجاح');
             setSelected([]);
             fetchCandidates();
@@ -126,9 +118,10 @@ export default function CreateReturnRidePage() {
             console.error(err);
             toast.error('❌ حدث خطأ أثناء إنشاء الرحلة');
         } finally {
-            setLoading(false);
+            setLoading(false); // ← مهم
         }
     };
+
 
     return (
         <div className="max-w-5xl mx-auto p-4 space-y-6 text-right" dir="rtl">
@@ -139,16 +132,6 @@ export default function CreateReturnRidePage() {
             <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                     <label className="text-blue-700 font-semibold flex items-center gap-1"><Bus size={16} /> الباص</label>
-                    {/* <select
-                        className="w-full border rounded p-2"
-                        value={busId}
-                        onChange={(e) => setBusId(e.target.value)}
-                    >
-                        <option value="">اختر باص</option>
-                        {buses.map((b) => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select> */}
                     <select
                         className="w-full border rounded p-2"
                         value={busId}
@@ -217,10 +200,10 @@ export default function CreateReturnRidePage() {
             {students.length > 0 && (
                 <button
                     onClick={handleCreateReturnRide}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="w-full sm:w-auto mt-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
                 >
-                    {loading ? 'جاري الإنشاء...' : 'إنشاء رحلة العودة'}
+                    {isLoading ? 'جاري الإنشاء...' : 'إنشاء رحلة العودة'}
                 </button>
             )}
         </div>

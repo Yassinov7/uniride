@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import dayjs from 'dayjs';
+import { useLoadingStore } from '@/store/loadingStore';
+
 
 export default function WalletTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchTransactions();
@@ -14,10 +16,10 @@ export default function WalletTransactionsPage() {
 
     const fetchTransactions = async () => {
         setLoading(true);
-
-        const { data, error } = await supabase
-            .from('wallet_transactions')
-            .select(`
+        try {
+            const { data, error } = await supabase
+                .from('wallet_transactions')
+                .select(`
         id,
         amount,
         description,
@@ -25,24 +27,24 @@ export default function WalletTransactionsPage() {
         profiles:student_id (full_name),
         admin:created_by (full_name)
       `)
-            .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error(error);
-        } else {
-            setTransactions(data);
+            if (error) {
+                toast.error('فشل في تحميل العمليات');
+            } else {
+                setTransactions(data);
+            }
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
+
 
     return (
         <div className="space-y-6">
             <h1 className="text-xl font-bold text-blue-600">سجل العمليات المالية</h1>
 
-            {loading ? (
-                <p className="text-gray-600">جاري التحميل...</p>
-            ) : transactions.length === 0 ? (
+            {transactions.length === 0 ? (
                 <p className="text-gray-500">لا توجد عمليات مسجلة.</p>
             ) : (
                 <div className="overflow-x-auto">

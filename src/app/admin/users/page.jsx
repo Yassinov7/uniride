@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { FileDown, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function AdminStudentsPage() {
     const [students, setStudents] = useState([]);
@@ -11,29 +12,38 @@ export default function AdminStudentsPage() {
     const [locations, setLocations] = useState([]);
     const [filters, setFilters] = useState({ university: '', location: '', gender: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchAll();
     }, []);
 
     const fetchAll = async () => {
-        const { data: profiles } = await supabase
-            .from('profiles')
-            .select(`
-        full_name, gender,phone,
-        universities(name),
-        locations(name)
-      `)
-            .eq('role', 'student');
+        setLoading(true);
+        try {
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select(`
+                full_name, gender, phone,
+                universities(name),
+                locations(name)
+            `)
+                .eq('role', 'student');
 
-        const { data: unis } = await supabase.from('universities').select('*');
-        const { data: locs } = await supabase.from('locations').select('*');
+            const { data: unis } = await supabase.from('universities').select('*');
+            const { data: locs } = await supabase.from('locations').select('*');
 
-        setStudents(profiles || []);
-        setFiltered(profiles || []);
-        setUniversities(unis || []);
-        setLocations(locs || []);
+            setStudents(profiles || []);
+            setFiltered(profiles || []);
+            setUniversities(unis || []);
+            setLocations(locs || []);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     const handleFilter = () => {
         const f = students.filter((s) => {

@@ -5,21 +5,34 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
+import { useLoadingStore } from '@/store/loadingStore';
+
 
 export default function Login() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { isLoading, setLoading } = useLoadingStore();
 
     const handleLogin = async () => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        setLoading(true);
 
-        if (error) {
-            toast.error(error.message);
-        } else {
-            router.push('/auth-redirect');
+        try {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                toast.error(error.message);
+            } else {
+                router.push('/auth-redirect');
+            }
+        } catch (err) {
+            toast.error('حدث خطأ أثناء تسجيل الدخول');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -45,9 +58,10 @@ export default function Login() {
 
                 <button
                     onClick={handleLogin}
+                    disabled={isLoading}
                     className="bg-blue-600 text-white rounded w-full p-2 mb-4"
                 >
-                    دخول
+                    {isLoading ? 'جاري التسجيل...' : 'تسجيل الدخول'}
                 </button>
 
                 <div className="flex justify-between text-sm">

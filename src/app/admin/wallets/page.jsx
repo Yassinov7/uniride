@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Pencil, X } from 'lucide-react';
+import { useLoadingStore } from '@/store/loadingStore';
+
 
 export default function AdminWalletsPage() {
     const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const {isLoading, setLoading } = useLoadingStore();
     const [editingStudent, setEditingStudent] = useState(null);
     const [form, setForm] = useState({ amount: '', description: '', saving: false });
 
@@ -17,32 +19,33 @@ export default function AdminWalletsPage() {
 
     const fetchData = async () => {
         setLoading(true);
+        try {
+            const { data: profiles, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, role')
+                .order('full_name');
 
-        const { data: profiles, error } = await supabase
-            .from('profiles')
-            .select('id, full_name, role')
-            .order('full_name');
+            if (error || !profiles) {
+                toast.error('فشل تحميل قائمة الطلاب');
+                return;
+            }
 
-        if (error || !profiles) {
-            toast.error('فشل تحميل قائمة الطلاب');
+            const studentsOnly = profiles.filter((p) => p.role !== 'admin');
+
+            const { data: wallets } = await supabase.from('wallets').select('*');
+
+            const result = studentsOnly.map((student) => {
+                const wallet = wallets?.find((w) => w.student_id === student.id);
+                return {
+                    ...student,
+                    balance: wallet?.balance ?? 0,
+                };
+            });
+
+            setStudents(result);
+        } finally {
             setLoading(false);
-            return;
         }
-
-        const studentsOnly = profiles.filter((p) => p.role !== 'admin');
-
-        const { data: wallets } = await supabase.from('wallets').select('*');
-
-        const result = studentsOnly.map((student) => {
-            const wallet = wallets?.find((w) => w.student_id === student.id);
-            return {
-                ...student,
-                balance: wallet?.balance ?? 0,
-            };
-        });
-
-        setStudents(result);
-        setLoading(false);
     };
 
     const handleFormChange = (e) => {
@@ -63,46 +66,54 @@ export default function AdminWalletsPage() {
 
         setForm((prev) => ({ ...prev, saving: true }));
 
-        const numericAmount = parseFloat(amount);
+        try {
+            const numericAmount = parseFloat(amount);
 
-        const { data: current } = await supabase
-            .from('wallets')
-            .select('*')
-            .eq('student_id', student.id)
-            .single();
+            const { data: current } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('student_id', student.id)
+                .single();
 
-        const newBalance = (current?.balance ?? 0) + numericAmount;
+            const newBalance = (current?.balance ?? 0) + numericAmount;
 
-        const { error: walletError } = await supabase.from('wallets').upsert({
-            student_id: student.id,
-            balance: newBalance,
-        });
+            const { error: walletError } = await supabase.from('wallets').upsert({
+                student_id: student.id,
+                balance: newBalance,
+            });
 
-        if (walletError) {
-            toast.error('فشل تحديث الرصيد');
+            if (walletError) {
+                toast.error('فشل تحديث الرصيد');
+                return;
+            }
+
+            const { data: user } = await supabase.auth.getUser();
+
+            await supabase.from('wallet_transactions').insert({
+                student_id: student.id,
+                amount: numericAmount,
+                description,
+                created_by: user?.user?.id ?? null,
+            });
+
+            toast.success(numericAmount > 0 ? 'تمت الإضافة بنجاح ✅' : 'تم الخصم بنجاح ✅');
+            setEditingStudent(null);
+            setForm({ amount: '', description: '', saving: false });
+            fetchData();
+        } catch (error) {
+            console.error('خطأ أثناء تعديل الرصيد:', error);
+            toast.error('حدث خطأ غير متوقع');
+        } finally {
             setForm((prev) => ({ ...prev, saving: false }));
-            return;
         }
-
-        const { data: user } = await supabase.auth.getUser();
-        await supabase.from('wallet_transactions').insert({
-            student_id: student.id,
-            amount: numericAmount,
-            description,
-            created_by: user?.user?.id ?? null,
-        });
-
-        toast.success(numericAmount > 0 ? 'تمت الإضافة بنجاح ✅' : 'تم الخصم بنجاح ✅');
-        setEditingStudent(null);
-        setForm({ amount: '', description: '', saving: false });
-        fetchData();
     };
+
 
     return (
         <div className="space-y-6">
             <h1 className="text-xl font-bold text-blue-600">إدارة أرصدة الطلاب</h1>
 
-            {loading ? (
+            {isLoading ? (
                 <p className="text-gray-600">جاري التحميل...</p>
             ) : (
                 <div className="overflow-x-auto">
@@ -204,8 +215,8 @@ export default function AdminWalletsPage() {
                                 onClick={handleSubmit}
                                 disabled={form.saving}
                                 className={`w-full py-2 rounded text-white ${form.amount < 0
-                                        ? 'bg-orange-600 hover:bg-orange-700'
-                                        : 'bg-blue-600 hover:bg-blue-700'
+                                    ? 'bg-orange-600 hover:bg-orange-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
                                     } disabled:opacity-50`}
                             >
                                 {form.saving ? 'جارٍ التنفيذ...' : 'تنفيذ العملية'}

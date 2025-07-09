@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { PlusCircle, X } from 'lucide-react';
+import { useLoadingStore } from '@/store/loadingStore';
+
 
 const allDays = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
 export default function UniversitiesPage() {
     const [universities, setUniversities] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, setLoading } = useLoadingStore();
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     // add form
     const [name, setName] = useState('');
@@ -21,6 +23,7 @@ export default function UniversitiesPage() {
     const [editDays, setEditDays] = useState([]);
 
     const fetchUniversities = async () => {
+        setLoading(true); // ⬅️ إضافة
         const { data, error } = await supabase
             .from('universities')
             .select('*')
@@ -29,8 +32,9 @@ export default function UniversitiesPage() {
         if (!error) {
             setUniversities(data);
         }
-        setLoading(false);
+        setLoading(false); // ⬅️ إنهاء التحميل
     };
+
 
     useEffect(() => {
         fetchUniversities();
@@ -141,9 +145,7 @@ export default function UniversitiesPage() {
                 </button>
             </div>
 
-            {loading ? (
-                <p>جاري التحميل...</p>
-            ) : universities.length === 0 ? (
+            {universities.length === 0 ? (
                 <p className="text-gray-500">لا توجد جامعات مسجلة حاليًا.</p>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

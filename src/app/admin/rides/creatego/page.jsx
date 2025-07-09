@@ -5,6 +5,7 @@ import { CalendarDays, Bus, Clock, Repeat, SquareCheckBig } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import toast from 'react-hot-toast';
+import { useLoadingStore } from '@/store/loadingStore';
 
 dayjs.locale('ar');
 
@@ -16,7 +17,7 @@ export default function CreateGoRidePage() {
     const [busId, setBusId] = useState('');
     const [time, setTime] = useState('07:30');
     const [repeat, setRepeat] = useState(1);
-    const [loading, setLoading] = useState(false);
+    const {isLoading, setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchBuses();
@@ -27,98 +28,112 @@ export default function CreateGoRidePage() {
     //     if (data) setBuses(data);
     // };
     const fetchBuses = async () => {
-        const { data: allBuses } = await supabase.from('buses').select('*');
-        if (!allBuses) return;
+        setLoading(true);
+        try {
+            const { data: allBuses } = await supabase.from('buses').select('*');
+            if (!allBuses) {
+                setBuses([]);
+                return;
+            }
 
-        if (!date) {
-            setBuses(allBuses.map(b => ({ ...b, isUnavailable: false })));
-            return;
+            if (!date) {
+                setBuses(allBuses.map(b => ({ ...b, isUnavailable: false })));
+                return;
+            }
+
+            const { data: usedRides } = await supabase
+                .from('rides')
+                .select('bus_id')
+                .eq('date', date)
+                .eq('route_type', 'go');
+
+            const unavailableIds = new Set(usedRides?.map(r => r.bus_id) || []);
+
+            const busesWithStatus = allBuses.map((b) => ({
+                ...b,
+                isUnavailable: unavailableIds.has(b.id),
+            }));
+
+            setBuses(busesWithStatus);
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل في تحميل الباصات');
+        } finally {
+            setLoading(false);
         }
-
-        const { data: usedRides } = await supabase
-            .from('rides')
-            .select('bus_id')
-            .eq('date', date)
-            .eq('route_type', 'go');
-
-        const unavailableIds = new Set(usedRides?.map(r => r.bus_id) || []);
-
-        const busesWithStatus = allBuses.map((b) => ({
-            ...b,
-            isUnavailable: unavailableIds.has(b.id),
-        }));
-
-        setBuses(busesWithStatus);
     };
+
 
     const fetchStudents = async () => {
         if (!date) return;
+        setLoading(true);
+        try {
+            const { data: requests } = await supabase
+                .from('ride_requests')
+                .select(`
+                id, student_id, date,
+                profiles (
+                    full_name, gender,
+                    universities(name),
+                    locations(name, fare)
+                ),
+                ride_request_timings(go_time)
+            `)
+                .eq('date', date)
+                .eq('status', 'approved');
 
-        // 1. جلب الطلبات المقبولة في هذا التاريخ
-        const { data: requests } = await supabase
-            .from('ride_requests')
-            .select(`
-      id, student_id, date,
-      profiles (
-        full_name, gender,
-        universities(name),
-        locations(name, fare)
-      ),
-      ride_request_timings(go_time)
-    `)
-            .eq('date', date)
-            .eq('status', 'approved');
+            if (!requests) return;
 
-        if (!requests) return;
+            const { data: allAssigned } = await supabase
+                .from('ride_students')
+                .select('student_id, ride_id');
 
-        // 2. جلب جميع ride_students
-        const { data: allAssigned } = await supabase
-            .from('ride_students')
-            .select('student_id, ride_id');
+            const { data: rides } = await supabase
+                .from('rides')
+                .select('id')
+                .eq('date', date)
+                .eq('route_type', 'go');
 
-        // 3. جلب الرحلات من نوع "go" في نفس التاريخ
-        const { data: rides } = await supabase
-            .from('rides')
-            .select('id')
-            .eq('date', date)
-            .eq('route_type', 'go');
+            const rideIdsForDate = new Set(rides?.map(r => r.id));
+            const assigned = allAssigned?.filter(rs => rideIdsForDate.has(rs.ride_id));
+            const assignedIds = new Set(assigned.map((s) => s.student_id));
 
-        const rideIdsForDate = new Set(rides?.map(r => r.id));
-        const assigned = allAssigned?.filter(rs => rideIdsForDate.has(rs.ride_id));
-        const assignedIds = new Set(assigned.map((s) => s.student_id));
+            const filtered = requests.filter((r) => !assignedIds.has(r.student_id));
 
-        // 4. فلترة الطلاب غير المرتبطين برحلة go في نفس اليوم
-        const filtered = requests.filter((r) => !assignedIds.has(r.student_id));
+            const sorted = filtered.sort((a, b) => {
+                const uA = a.profiles.universities?.name || '';
+                const uB = b.profiles.universities?.name || '';
+                const gA = a.profiles.gender || '';
+                const gB = b.profiles.gender || '';
+                const lA = a.profiles.locations?.name || '';
+                const lB = b.profiles.locations?.name || '';
+                const tA = a.ride_request_timings?.go_time || '00:00';
+                const tB = b.ride_request_timings?.go_time || '00:00';
 
-        // 5. ترتيب حسب الجامعة > الجنس > المنطقة > الوقت
-        const sorted = filtered.sort((a, b) => {
-            const uA = a.profiles.universities?.name || '';
-            const uB = b.profiles.universities?.name || '';
-            const gA = a.profiles.gender || '';
-            const gB = b.profiles.gender || '';
-            const lA = a.profiles.locations?.name || '';
-            const lB = b.profiles.locations?.name || '';
-            const tA = a.ride_request_timings?.go_time || '00:00';
-            const tB = b.ride_request_timings?.go_time || '00:00';
+                if (uA !== uB) return uA.localeCompare(uB);
+                if (gA !== gB) return gA.localeCompare(gB);
+                if (lA !== lB) return lA.localeCompare(lB);
+                return tA.localeCompare(tB);
+            });
 
-            if (uA !== uB) return uA.localeCompare(uB);
-            if (gA !== gB) return gA.localeCompare(gB);
-            if (lA !== lB) return lA.localeCompare(lB);
-            return tA.localeCompare(tB);
-        });
+            const uniqueMap = new Map();
 
-        // 6. إزالة التكرار والإبقاء على من يملك go_time إن وجد
-        const uniqueMap = new Map();
-
-        for (const req of sorted) {
-            const existing = uniqueMap.get(req.student_id);
-            if (!existing || (!existing.ride_request_timings?.go_time && req.ride_request_timings?.go_time)) {
-                uniqueMap.set(req.student_id, req);
+            for (const req of sorted) {
+                const existing = uniqueMap.get(req.student_id);
+                if (!existing || (!existing.ride_request_timings?.go_time && req.ride_request_timings?.go_time)) {
+                    uniqueMap.set(req.student_id, req);
+                }
             }
-        }
 
-        setStudents(Array.from(uniqueMap.values()));
+            setStudents(Array.from(uniqueMap.values()));
+        } catch (err) {
+            console.error(err);
+            toast.error('فشل في تحميل الطلبات');
+        } finally {
+            setLoading(false);
+        }
     };
+
 
 
 
@@ -131,73 +146,6 @@ export default function CreateGoRidePage() {
         );
     };
 
-    // const handleCreateRide = async () => {
-    //     if (!date || !busId || !time || selected.length === 0) {
-    //         toast.error('❌ يرجى تعبئة جميع الحقول واختيار الطلاب');
-    //         return;
-    //     }
-    //     const {
-    //         data: { user },
-    //     } = await supabase.auth.getUser();
-
-    //     setLoading(true);
-
-    //     try {
-    //         for (let i = 0; i < repeat; i++) {
-    //             const rideDate = dayjs(date).add(i * 7, 'day').format('YYYY-MM-DD');
-
-    //             const { data: ride } = await supabase
-    //                 .from('rides')
-    //                 .insert({
-    //                     date: rideDate,
-    //                     time,
-    //                     bus_id: busId,
-    //                     route_type: 'go',
-    //                 })
-    //                 .select()
-    //                 .single();
-
-    //             for (const student_id of selected) {
-    //                 const studentData = students.find((s) => s.student_id === student_id);
-
-    //                 const fare = studentData.profiles.locations.fare;
-
-    //                 await supabase.from('ride_students').insert({ ride_id: ride.id, student_id });
-
-    //                 await supabase.from('wallet_transactions').insert({
-    //                     student_id,
-    //                     amount: -fare,
-    //                     description: 'أجرة رحلة ذهاب',
-    //                     created_by: user.id,
-    //                 });
-
-    //                 // 2. جلب الرصيد الحالي
-    //                 const { data: wallet } = await supabase
-    //                     .from('wallets')
-    //                     .select('balance')
-    //                     .eq('student_id', student_id)
-    //                     .single();
-
-    //                 const currentBalance = wallet?.balance || 0;
-
-    //                 // 3. تحديث الرصيد (حتى لو سالب)
-    //                 await supabase
-    //                     .from('wallets')
-    //                     .update({ balance: currentBalance - fare })
-    //                     .eq('student_id', student_id);
-    //             }
-
-    //         }
-
-    //         toast.success('✅ تم إنشاء الرحلة بنجاح');
-    //         setSelected([]);
-    //     } catch (err) {
-    //         console.error(err);
-    //         toast.error('❌ حدث خطأ أثناء إنشاء الرحلة');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
     const handleCreateRide = async () => {
         if (!date || !busId || !time || selected.length === 0) {
             toast.error('❌ يرجى تعبئة جميع الحقول واختيار الطلاب');
@@ -229,8 +177,7 @@ export default function CreateGoRidePage() {
                     const studentData = students.find((s) => s.student_id === student_id);
                     const fare = studentData.profiles.locations.fare;
 
-                    // التحقق من وجود المحفظة
-                    const { data: wallet, error: walletError } = await supabase
+                    const { data: wallet } = await supabase
                         .from('wallets')
                         .select('balance')
                         .eq('student_id', student_id)
@@ -238,7 +185,7 @@ export default function CreateGoRidePage() {
 
                     if (!wallet) {
                         toast.error(`⛔ لا توجد محفظة للطالب: ${studentData.profiles.full_name}`);
-                        continue; // تخطي هذا الطالب
+                        continue;
                     }
 
                     const currentBalance = wallet.balance || 0;
@@ -263,12 +210,11 @@ export default function CreateGoRidePage() {
                         .eq('student_id', student_id)
                         .eq('date', rideDate);
                 }
-
             }
 
             toast.success('✅ تم إنشاء الرحلة بنجاح');
             setSelected([]);
-            fetchStudents(); // إعادة تحميل الطلبات بعد التوزيع
+            fetchStudents();
         } catch (err) {
             console.error(err);
             toast.error('❌ حدث خطأ أثناء إنشاء الرحلة');
@@ -276,6 +222,7 @@ export default function CreateGoRidePage() {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="max-w-5xl mx-auto p-4 space-y-6 text-right" dir="rtl">
@@ -394,10 +341,10 @@ export default function CreateGoRidePage() {
             {students.length > 0 && (
                 <button
                     onClick={handleCreateRide}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="w-full sm:w-auto mt-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
                 >
-                    {loading ? 'جاري الإنشاء...' : 'إنشاء الرحلة'}
+                    {isLoading ? 'جاري الإنشاء...' : 'إنشاء الرحلة'}
                 </button>
             )}
         </div>
