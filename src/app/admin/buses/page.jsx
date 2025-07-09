@@ -30,6 +30,10 @@ export default function BusesPage() {
         setLoading(false); // ✅ إيقاف التحميل
     };
 
+    useEffect(() => {
+        fetchBuses();
+    }, []);
+
     const handleAdd = async () => {
         if (!name || !capacity) {
             toast.error('يرجى إدخال الاسم والسعة');
@@ -56,7 +60,6 @@ export default function BusesPage() {
             fetchBuses();
         }
     };
-
 
     const handleDelete = async (id) => {
         setLoading(true);
@@ -100,7 +103,6 @@ export default function BusesPage() {
         }
     };
 
-
     return (
         <div>
             <h1 className="text-xl font-bold text-blue-600 mb-4">الباصات</h1>
@@ -140,9 +142,7 @@ export default function BusesPage() {
             </div>
 
             {/* Cards */}
-            {loading ? (
-                <p>جاري التحميل...</p>
-            ) : buses.length === 0 ? (
+            {buses.length === 0 ? (
                 <p className="text-gray-500">لا توجد باصات مسجلة.</p>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
