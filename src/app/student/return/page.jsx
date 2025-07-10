@@ -10,7 +10,7 @@ import { useLoadingStore } from '@/store/loadingStore';
 export default function ReturnRidePage() {
     const [booking, setBooking] = useState(null);
     const { setLoading } = useLoadingStore();
-
+ 
     useEffect(() => {
         fetchReturnRide();
     }, []);

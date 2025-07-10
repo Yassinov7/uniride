@@ -4,24 +4,28 @@ import { supabase } from '@/lib/supabase';
 import { Bus, Clock, CalendarDays, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
+import { useLoadingStore } from '@/store/loadingStore';
 
 dayjs.locale('ar');
 
 export default function StudentRidesPage() {
     const [rides, setRides] = useState([]);
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchRides();
     }, []);
 
     const fetchRides = async () => {
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
+        setLoading(true);
+        try {
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
 
-        const { data } = await supabase
-            .from('ride_students')
-            .select(`
+            const { data } = await supabase
+                .from('ride_students')
+                .select(`
         ride:ride_id (
           date,
           time,
@@ -29,18 +33,22 @@ export default function StudentRidesPage() {
           buses(name)
         )
       `)
-            .eq('student_id', user.id);
+                .eq('student_id', user.id);
 
-        if (!data) return;
+            if (!data) return;
 
-        const sorted = data
-            .map((r) => ({
-                ...r.ride,
-                datetime: dayjs(`${r.ride.date} ${r.ride.time}`),
-            }))
-            .sort((a, b) => b.datetime - a.datetime);
+            const sorted = data
+                .map((r) => ({
+                    ...r.ride,
+                    datetime: dayjs(`${r.ride.date} ${r.ride.time}`),
+                }))
+                .sort((a, b) => b.datetime - a.datetime);
 
-        setRides(sorted);
+            setRides(sorted);
+        }
+        finally {
+            setLoading(false);
+        }
     };
 
     return (

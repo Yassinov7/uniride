@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { BadgeDollarSign } from 'lucide-react';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function StudentWalletPage() {
     const [balance, setBalance] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchBalance();
@@ -62,9 +63,7 @@ export default function StudentWalletPage() {
             <BadgeDollarSign size={32} className="mx-auto text-blue-600" />
             <h1 className="text-xl font-bold text-blue-600">رصيدك الحالي</h1>
 
-            {loading ? (
-                <p className="text-gray-500">جاري التحميل...</p>
-            ) : (
+            {(
                 <p className={`text-3xl font-extrabold ${balance < 0 ? 'text-red-600' : 'text-orange-500'}`}>
                     {balance} ل.س
                 </p>

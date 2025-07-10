@@ -6,10 +6,11 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
 import { Calendar, Clock, BusFront, CheckCircle, ArrowRight } from 'lucide-react';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function NextBookingPage() {
     const [booking, setBooking] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
     const [allBookings, setAllBookings] = useState([]);
     const [confirmed, setConfirmed] = useState(false);
     const router = useRouter();
@@ -19,44 +20,50 @@ export default function NextBookingPage() {
     }, []);
 
     const fetchBooking = async () => {
-        const { data: userData } = await supabase.auth.getUser();
-        const studentId = userData?.user?.id;
-        if (!studentId) return toast.error('لم يتم التعرف على المستخدم');
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const studentId = userData?.user?.id;
+            if (!studentId) return toast.error('لم يتم التعرف على المستخدم');
 
-        const { data, error } = await supabase
-            .from('ride_students')
-            .select(`ride_id(id, date, time, route_type)`)
-            .eq('student_id', studentId);
+            setLoading(true);
 
-        if (error) return toast.error('فشل تحميل البيانات');
+            const { data, error } = await supabase
+                .from('ride_students')
+                .select(`ride_id(id, date, time, route_type)`)
+                .eq('student_id', studentId);
 
-        const rides = data
-            .filter(r => r.ride_id?.date && r.ride_id?.time)
-            .map(r => ({
-                ...r,
-                rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`),
-            }));
+            if (error) return toast.error('فشل تحميل البيانات');
 
-        const now = dayjs();
-        const today = now.startOf('day');
+            const rides = data
+                .filter(r => r.ride_id?.date && r.ride_id?.time)
+                .map(r => ({
+                    ...r,
+                    rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`),
+                }));
 
-        const futureRides = rides
-            .filter(r => {
-                const rideDate = r.rideDateTime.startOf('day');
-                // إظهار حجز اليوم حتى الساعة 6 مساءً
-                if (rideDate.isSame(today)) {
-                    return now.hour() < 18;
-                }
-                return rideDate.isAfter(today);
-            })
-            .sort((a, b) => a.rideDateTime - b.rideDateTime);
+            const now = dayjs();
+            const today = now.startOf('day');
 
-        const next = futureRides.find(r => r.ride_id.route_type === 'go') || null;
+            const futureRides = rides
+                .filter(r => {
+                    const rideDate = r.rideDateTime.startOf('day');
+                    // إظهار حجز اليوم حتى الساعة 6 مساءً
+                    if (rideDate.isSame(today)) {
+                        return now.hour() < 18;
+                    }
+                    return rideDate.isAfter(today);
+                })
+                .sort((a, b) => a.rideDateTime - b.rideDateTime);
 
-        setBooking(next);
-        setAllBookings(futureRides);
-        checkIfAlreadyConfirmed(studentId);
-        setLoading(false);
+            const next = futureRides.find(r => r.ride_id.route_type === 'go') || null;
+
+            setBooking(next);
+            setAllBookings(futureRides);
+            checkIfAlreadyConfirmed(studentId);
+        }
+        finally {
+            setLoading(false);
+        }
     };
 
     const checkIfAlreadyConfirmed = async (studentId) => {
@@ -121,9 +128,7 @@ export default function NextBookingPage() {
         <div className="max-w-3xl mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-6" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 text-center">الحجز القادم</h1>
 
-            {loading ? (
-                <p className="text-center text-gray-500">جاري التحميل...</p>
-            ) : booking ? (
+            {booking ? (
                 <div className="space-y-3 text-center">
                     <div className="flex justify-center gap-2 items-center text-gray-700">
                         <Calendar size={20} className="text-orange-500" />

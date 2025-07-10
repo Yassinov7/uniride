@@ -12,7 +12,9 @@ import {
     BadgeDollarSign,
     Inbox,
     UserCircle2,
-    FileWarning
+    FileWarning,
+    Phone,
+    MessageCircleDashed
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -125,15 +127,42 @@ export default function StudentHomePage() {
 
             {/* 👋 الترحيب */}
             <div className="text-center space-y-2 bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-700 flex justify-center items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-blue-700 flex justify-center items-center gap-2">
                     👋 مرحباً {fullName || 'عزيزي الطالب'}
-                </h1>
+                </h2>
                 <p className="text-gray-700 text-base sm:text-lg font-medium">
                     {dateTime.format('dddd، D MMMM YYYY')} – الساعة {dateTime.format('hh:mm')}
                 </p>
             </div>
 
+            <div className="mt-6">
+                {/* 🧑‍💼 بطاقة تواصل مع المشرف */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-blue-800 mb-1 flex items-center gap-2">
+                            🧑‍💼 تواصل مع المشرف
+                        </h2>
+                        <p className="text-sm text-gray-700">لأي استفسار أو مساعدة، لا تتردد في التواصل معنا مباشرة.</p>
+                    </div>
 
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <a
+                            href="tel:+963984872471"
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                        >
+                            <Phone size={18} /> الاتصال الآن
+                        </a>
+
+                        <a
+                            href={`https://wa.me/963984872471?text=${encodeURIComponent("مرحبًا، أود الاستفسار عن.. ")}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                        >
+                            <MessageCircleDashed size={18} /> واتساب
+                        </a>
+                    </div>
+                </div>
+            </div>
             {/* روابط التنقل */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 {navItems.map((item, idx) => (
@@ -151,6 +180,7 @@ export default function StudentHomePage() {
                     </Link>
                 ))}
             </div>
+
 
         </div>
     );

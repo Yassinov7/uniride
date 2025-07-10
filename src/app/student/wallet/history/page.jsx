@@ -3,34 +3,38 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import dayjs from 'dayjs';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function StudentWalletHistoryPage() {
     const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { setLoading } = useLoadingStore();
 
     useEffect(() => {
         fetchTransactions();
     }, []);
 
     const fetchTransactions = async () => {
-        const user = await supabase.auth.getUser();
-        const { data, error } = await supabase
-            .from('wallet_transactions')
-            .select('amount, description, created_at')
-            .eq('student_id', user.data.user?.id)
-            .order('created_at', { ascending: false });
+        setLoading(true);
+        try {
+            const user = await supabase.auth.getUser();
+            const { data, error } = await supabase
+                .from('wallet_transactions')
+                .select('amount, description, created_at')
+                .eq('student_id', user.data.user?.id)
+                .order('created_at', { ascending: false });
 
-        if (!error) setTransactions(data || []);
-        setLoading(false);
+            if (!error) setTransactions(data || []);
+        }
+        finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="max-w-2xl mx-auto mt-10 bg-white rounded-lg shadow p-6 space-y-6">
             <h1 className="text-xl font-bold text-blue-600 text-center">سجل المعاملات</h1>
 
-            {loading ? (
-                <p className="text-gray-500 text-center">جاري التحميل...</p>
-            ) : transactions.length === 0 ? (
+            {transactions.length === 0 ? (
                 <p className="text-center text-gray-600">لا يوجد أي معاملات حتى الآن.</p>
             ) : (
                 <div className="overflow-x-auto">

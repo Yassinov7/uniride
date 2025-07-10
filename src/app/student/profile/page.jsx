@@ -5,10 +5,12 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Pencil, Mail, UserCircle, University, MapPin, Lock, Phone } from 'lucide-react';
 import Modal from '@/components/Modal';
+import { useLoadingStore } from '@/store/loadingStore';
 
 export default function StudentProfilePage() {
     const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoadings] = useState(true);
+    const { setLoading } = useLoadingStore();
     const [editOpen, setEditOpen] = useState(false);
     const [passwordOpen, setPasswordOpen] = useState(false);
 
@@ -29,34 +31,39 @@ export default function StudentProfilePage() {
     }, []);
 
     const fetchProfile = async () => {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData?.user?.id;
+        setLoading(true);
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData?.user?.id;
 
-        if (!userId) {
-            toast.error('تعذر التعرف على المستخدم');
-            return;
+            if (!userId) {
+                toast.error('تعذر التعرف على المستخدم');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, gender, university_id, location_id,phone, universities(name), locations(name)')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                toast.error('فشل تحميل البيانات');
+            } else {
+                setProfile(data);
+                setForm({
+                    full_name: data.full_name || '',
+                    gender: data.gender || '',
+                    university_id: data.university_id || null,
+                    location_id: data.location_id || null,
+                    phone: data.phone || '',
+                });
+            }
+        } finally {
+            setLoadings(false);
+            setLoading(false);
         }
 
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, full_name, gender, university_id, location_id,phone, universities(name), locations(name)')
-            .eq('id', userId)
-            .single();
-
-        if (error) {
-            toast.error('فشل تحميل البيانات');
-        } else {
-            setProfile(data);
-            setForm({
-                full_name: data.full_name || '',
-                gender: data.gender || '',
-                university_id: data.university_id || null,
-                location_id: data.location_id || null,
-                phone: data.phone || '',
-            });
-        }
-
-        setLoading(false);
     };
 
     const fetchOptions = async () => {
@@ -98,11 +105,24 @@ export default function StudentProfilePage() {
         }
     };
 
+    const getAvatar = () => {
+        if (profile.gender === 'male') return '/avatars/male.jpg';
+        if (profile.gender === 'female') return '/avatars/female.jpg';
+        return '/avatars/notsetgender.svg';
+    };
+
     if (loading) return <p className="text-center mt-10 text-gray-500">جارٍ تحميل البيانات...</p>;
 
     return (
         <div className="max-w-2xl mx-auto mt-10 bg-white p-6 shadow rounded space-y-6">
             <h1 className="text-xl font-bold text-blue-700 text-center">الملف الشخصي</h1>
+            <div className="flex justify-center">
+                <img
+                    src={getAvatar()}
+                    alt="الصورة الرمزية"
+                    className="w-24 h-24 rounded-full border-4 border-orange-400 shadow-md"
+                />
+            </div>
 
             <div className="space-y-4">
                 <div className="flex items-center gap-3 text-gray-700">
@@ -215,21 +235,6 @@ export default function StudentProfilePage() {
                                 <option key={l.id} value={l.id}>{l.name}</option>
                             ))}
                         </select>
-
-                        {/* <select
-                            className="w-full border rounded px-3 py-2"
-                            value={form.location_id ?? ''}
-                            onChange={(e) =>
-                                setForm({ ...form, location_id: e.target.value ? Number(e.target.value) : null })
-                            }
-
-                        >
-                            <option value="">اختر المنطقة</option>
-                            {locations.map((l) => (
-                                <option key={l.id} value={l.id}>{l.name}</option>
-                            ))}
-                        </select> */}
-
                         <button
                             onClick={handleUpdate}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"

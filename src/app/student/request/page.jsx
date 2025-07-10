@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { BookAlert, DollarSign, Clock4 } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
+import { useLoadingStore } from '@/store/loadingStore';
 
 dayjs.locale('ar');
 const weekdays = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
@@ -19,7 +20,8 @@ const getStartFriday = (dateStr) => {
 export default function RideRequestPage() {
     const [startDate, setStartDate] = useState('');
     const [selectedDays, setSelectedDays] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoadings] = useState(false);
+    const { setLoading } = useLoadingStore();
     const [requests, setRequests] = useState([]);
     const [timingGroup, setTimingGroup] = useState(null); // group_id
     const [timingData, setTimingData] = useState([]); // [{request_id, date, go_time, return_time}]
@@ -45,8 +47,13 @@ export default function RideRequestPage() {
     }, []);
 
     const fetchRequests = async () => {
+        setLoading(true);
+        try{
         const { data } = await supabase.from('ride_requests').select('*').order('created_at', { ascending: false });
         setRequests(groupByGroupId(data || []));
+        }   finally{
+            setLoading(false);
+        }
     };
 
     const handleToggleDay = (index) => {
@@ -95,13 +102,13 @@ export default function RideRequestPage() {
             return;
         }
 
-        setLoading(true);
+        setLoadings(true);
         const { data: userData, error: authError } = await supabase.auth.getUser();
         const studentId = userData?.user?.id;
 
         if (!studentId || authError) {
             toast.error('فشل جلب معلومات الحساب');
-            setLoading(false);
+            setLoadings(false);
             return;
         }
 
@@ -112,7 +119,7 @@ export default function RideRequestPage() {
         const inserts = dates.map((date) => ({ student_id: studentId, date, group_id }));
         const { error } = await supabase.from('ride_requests').insert(inserts);
 
-        setLoading(false);
+        setLoadings(false);
 
         if (error) toast.error('حدث خطأ أثناء الحجز');
         else {
