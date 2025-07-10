@@ -15,7 +15,7 @@ export const useLoadingStore = create((set) => {
           set({ isLoading: false });
           timeoutId = null;
           toast.error('انتهى الوقت المخصص للتحميل. تأكد من الاتصال.');
-        }, 12000);
+        }, 20000);
       } else {
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = null;
