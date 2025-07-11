@@ -41,7 +41,7 @@ export default function WalletTransactionsPage() {
 
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mb-60">
             <h1 className="text-xl font-bold text-blue-600">سجل العمليات المالية</h1>
 
             {transactions.length === 0 ? (

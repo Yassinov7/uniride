@@ -8,9 +8,10 @@ import { BusFront } from 'lucide-react';
 
 export default function AuthRedirect() {
     const router = useRouter();
-    const { setUser } = useUserStore();
+    const { setUser, user } = useUserStore();
 
     useEffect(() => {
+        if (user) return;
         const checkAndRedirect = async () => {
             const {
                 data: { session },
@@ -55,7 +56,7 @@ export default function AuthRedirect() {
         };
 
         checkAndRedirect();
-    }, [router, setUser]);
+    }, [router, setUser, user]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 text-center p-6">

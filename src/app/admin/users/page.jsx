@@ -72,7 +72,7 @@ export default function AdminStudentsPage() {
     };
 
     return (
-        <div className="min-w-0 text-right" >
+        <div className="min-w-0 text-right space-y-6 mb-60" >
             <h1 className="text-xl font-bold mb-6 text-blue-700">جميع الطلاب</h1>
 
             {/* حقل البحث */}

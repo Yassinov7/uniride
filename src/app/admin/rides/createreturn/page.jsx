@@ -124,7 +124,7 @@ export default function CreateReturnRidePage() {
 
 
     return (
-        <div className="max-w-5xl mx-auto p-4 space-y-6 text-right" dir="rtl">
+        <div className="max-w-5xl mx-auto mb-60 p-4 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <Share2 size={22} /> توزيع طلاب رحلة العودة - {dayjs(date).format('dddd - YYYY/MM/DD')}
             </h1>

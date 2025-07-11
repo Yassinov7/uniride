@@ -31,7 +31,7 @@ export default function StudentWalletHistoryPage() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto mt-10 bg-white rounded-lg shadow p-6 space-y-6">
+        <div className="max-w-2xl mx-auto mt-10 bg-white rounded-lg shadow p-6 mb-60 space-y-6">
             <h1 className="text-xl font-bold text-blue-600 text-center">سجل المعاملات</h1>
 
             {transactions.length === 0 ? (

@@ -63,7 +63,7 @@ export default function ReturnRidePage() {
 
 
     return (
-        <div className="max-w-lg mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-4">
+        <div className="max-w-lg mx-auto mt-10 mb-60 bg-white shadow rounded-lg p-6 space-y-4">
             <h1 className="text-xl font-bold text-blue-600 text-center">رحلة العودة القادمة</h1>
 
             {booking ? (

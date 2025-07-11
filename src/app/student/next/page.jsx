@@ -125,7 +125,7 @@ export default function NextBookingPage() {
     const showButton = isToday && isGo && now.hour() >= 8 && now.hour() < 18 && !confirmed;
 
     return (
-        <div className="max-w-3xl mx-auto mt-10 bg-white shadow rounded-lg p-6 space-y-6" dir="rtl">
+        <div className="max-w-3xl mx-auto mb-60 mt-10 bg-white shadow rounded-lg p-6 space-y-6" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 text-center">الحجز القادم</h1>
 
             {booking ? (

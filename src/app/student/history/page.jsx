@@ -52,7 +52,7 @@ export default function StudentRidesPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-4 space-y-6 text-right" dir="rtl">
+        <div className="max-w-4xl mx-auto p-4 mb-60 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <RefreshCw size={20} /> سجل رحلاتي
             </h1>

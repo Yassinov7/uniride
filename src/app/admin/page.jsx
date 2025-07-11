@@ -14,7 +14,7 @@ import {
     BusFront,
 } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { useUserStore } from '@/store/userStore';
 
 dayjs.locale('ar');
 
@@ -33,32 +33,11 @@ const navItems = [
 
 export default function AdminHomePage() {
     const [dateTime, setDateTime] = useState(dayjs());
-    const [fullName, setFullName] = useState('');
+    const { user } = useUserStore();
 
     useEffect(() => {
         const interval = setInterval(() => setDateTime(dayjs()), 1000);
         return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        const fetchName = async () => {
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData?.user?.id;
-
-            if (!userId) return;
-
-            const { data } = await supabase
-                .from('profiles')
-                .select('full_name')
-                .eq('id', userId)
-                .single();
-
-            if (data?.full_name) {
-                setFullName(data.full_name);
-            }
-        };
-
-        fetchName();
     }, []);
 
     return (
@@ -66,7 +45,8 @@ export default function AdminHomePage() {
             {/* العنوان والترحيب */}
             <div className="text-center space-y-2 bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-700 flex justify-center items-center gap-2">
-                    أهلاً بك يا {fullName || 'مشرف'} 👋</h1>
+                    أهلاً بك يا {user?.full_name || 'مشرف'} 👋
+                </h1>
                 <p className="text-gray-700 text-base sm:text-lg font-medium">
                     {dateTime.format('dddd، D MMMM YYYY')} - الساعة {dateTime.format('hh:mm')}
                 </p>

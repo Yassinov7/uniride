@@ -131,7 +131,7 @@ export default function RideRequestPage() {
     };
 
     return (
-        <div className="max-w-xl mx-auto space-y-6">
+        <div className="max-w-xl mb-60 mx-auto space-y-6">
             <h1 className="text-xl font-bold text-blue-600">طلب حجز أسبوعي</h1>
 
             {/* إشعارات */}

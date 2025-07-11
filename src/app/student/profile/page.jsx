@@ -124,7 +124,7 @@ export default function StudentProfilePage() {
                 />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6 mb-60">
                 <div className="flex items-center gap-3 text-gray-700">
                     <UserCircle className="text-primary" />
                     <span className="font-semibold">الاسم الكامل:</span>

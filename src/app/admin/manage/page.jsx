@@ -9,51 +9,54 @@ import {
     Clock10Icon, BusFront, Users, User, Trash2, Repeat, XCircle, MoveRight
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import Swal from 'sweetalert2';
 import { useLoadingStore } from '@/store/loadingStore';
-
+import { useUserStore } from '@/store/userStore';
+import { useManageRideStore } from '@/store/useManageRides';
+import Swal from 'sweetalert2';
 
 dayjs.locale('ar');
 
 export default function RidesManagement() {
-    const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'));
-    const [routeType, setRouteType] = useState('go');
-    const [rides, setRides] = useState([]);
-    const [selectedRide, setSelectedRide] = useState(null); // ← حالة الـ Modal
+
+    const {
+        date,
+        routeType,
+        setDate,
+        setRouteType,
+        fetchRides,
+        rides
+    } = useManageRideStore();
+    const [selectedRide, setSelectedRide] = useState(null);
     const [studentToMove, setStudentToMove] = useState(null);
     const [availableRides, setAvailableRides] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [availableStudents, setAvailableStudents] = useState([]);
     const { setLoading } = useLoadingStore();
-
+    const { user } = useUserStore();
 
     useEffect(() => {
         fetchRides();
-    }, [date, routeType]);
+    }, [fetchRides]);
+    const filteredRides = rides.filter(
+        (ride) => ride.date === date && ride.route_type === routeType
+    );
 
     const handleRemoveStudent = async (student) => {
         const result = await Swal.fire({
-            title: 'تأكيد الحذف',
-            html: `
-      <p>هل تريد حذف <strong>${student.profiles?.full_name}</strong> من الرحلة؟</p>
-      <div style="margin-top: 10px; text-align: right;">
-        <input type="checkbox" id="refundCheckbox" />
-        <label for="refundCheckbox">استرجاع الرصيد تلقائيًا للطالب</label>
-      </div>
-    `,
+            title: 'تأكيد الإزالة',
+            text: `هل تريد إزالة ${student.profiles?.full_name} من الرحلة؟`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'نعم، احذف',
             cancelButtonText: 'إلغاء',
-            preConfirm: () => {
-                const checkbox = document.getElementById('refundCheckbox');
-                return checkbox?.checked;
-            }
+            input: 'checkbox',
+            inputPlaceholder: 'استرجاع الرصيد تلقائيًا للطالب',
         });
 
         if (!result.isConfirmed) return;
-        setLoading(true); // ← فقط بعد التأكيد
-        const shouldRefund = result.value;
+        setLoading(true);
+
+        const shouldRefund = result.value === 1;
 
         try {
             // حذف الطالب
@@ -68,7 +71,7 @@ export default function RidesManagement() {
                 return;
             }
 
-            // تحديث حالة الطالب حسب نوع الرحلة
+            // تحديث الحالة
             if (selectedRide.route_type === 'go') {
                 await supabase
                     .from('ride_requests')
@@ -115,8 +118,8 @@ export default function RidesManagement() {
                 await supabase.from('wallet_transactions').insert({
                     student_id: student.student_id,
                     amount: fare,
-                    description: 'استرداد رصيد بعد الحذف من الرحلة',
-                    created_by: user?.id,
+                    description: 'إستعادة الرصيد بعد إزالة من الرحلة',
+                    created_by: user?.full_name,
                 });
             }
 
@@ -130,6 +133,8 @@ export default function RidesManagement() {
             setLoading(false);
         }
     };
+
+
     const fetchAddableStudents = async () => {
         if (!selectedRide) return;
 
@@ -198,35 +203,10 @@ export default function RidesManagement() {
         setStudentToMove(null); // ← يغلق نافذة النقل بعد نجاح النقل
     };
 
-    const fetchRides = async () => {
-        setLoading(true);
-
-        const { data: ridesData } = await supabase
-            .from('rides')
-            .select('id, date, time, route_type, buses(name)')
-            .eq('date', date)
-            .eq('route_type', routeType);
-
-        const ridesWithStudents = await Promise.all(
-            (ridesData || []).map(async (ride) => {
-                const { data: students } = await supabase
-                    .from('ride_students')
-                    .select('student_id, profiles(full_name)')
-                    .eq('ride_id', ride.id);
-
-                return {
-                    ...ride,
-                    ride_students: students || [],
-                };
-            })
-        );
-
-        setRides(ridesWithStudents);
-        setLoading(false);
-    };
 
 
-    const handleAddStudentToRide = async (studentId) => {
+
+    const handleAddStudentToRide = async (studentId, shouldCharge = false) => {
         setLoading(true);
         try {
             await supabase.from('ride_students').insert({
@@ -248,7 +228,43 @@ export default function RidesManagement() {
                     .eq('date', selectedRide.date);
             }
 
-            toast.success('✅ تم إضافة الطالب');
+            if (shouldCharge) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('location_id')
+                    .eq('id', studentId)
+                    .single();
+
+                const { data: location } = await supabase
+                    .from('locations')
+                    .select('fare')
+                    .eq('id', profile?.location_id)
+                    .single();
+
+                const fare = +location?.fare || 0;
+
+                const { data: wallet } = await supabase
+                    .from('wallets')
+                    .select('balance')
+                    .eq('student_id', studentId)
+                    .single();
+
+                if (wallet) {
+                    await supabase
+                        .from('wallets')
+                        .update({ balance: wallet.balance - fare })
+                        .eq('student_id', studentId);
+                }
+
+                await supabase.from('wallet_transactions').insert({
+                    student_id: studentId,
+                    amount: -fare,
+                    description: 'خصم بعد إضافة الطالب الى الرحلة',
+                    created_by: user?.full_name,
+                });
+            }
+
+            toast.success('✅ تم إضافة الطالب' + (shouldCharge ? ' مع الخصم' : ''));
             fetchRides();
             setShowAddModal(false);
         } catch (err) {
@@ -286,7 +302,7 @@ export default function RidesManagement() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto mb-30 p-4 space-y-6 text-right" dir="rtl">
+        <div className="max-w-4xl mx-auto mb-60 p-4 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <ListTree size={22} /> إدارة قوائم الرحلات
             </h1>
@@ -323,7 +339,7 @@ export default function RidesManagement() {
                 <p className="text-center text-gray-500 mt-6">لا توجد رحلات في هذا اليوم</p>
             ) : (
                 <div className="space-y-4 mt-4">
-                    {rides.map((ride) => (
+                    {filteredRides.map((ride) => (
                         <div
                             key={ride.id}
                             onClick={() => setSelectedRide(ride)}
@@ -411,7 +427,7 @@ export default function RidesManagement() {
                                                     onClick={() => handleRemoveStudent(s)}
                                                     className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded text-xs font-medium transition"
                                                 >
-                                                    <Trash2 size={14} /> حذف
+                                                    <Trash2 size={14} /> إزالة
                                                 </button>
                                             </div>
                                         </li>
@@ -499,12 +515,20 @@ export default function RidesManagement() {
                                         <span className="text-sm font-medium text-gray-800">
                                             {student.profiles?.full_name}
                                         </span>
-                                        <button
-                                            onClick={() => handleAddStudentToRide(student.student_id)}
-                                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition"
-                                        >
-                                            <Plus size={14} /> إضافة
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleAddStudentToRide(student.student_id)}
+                                                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition"
+                                            >
+                                                <Plus size={14} /> إضافة فقط
+                                            </button>
+                                            <button
+                                                onClick={() => handleAddStudentToRide(student.student_id, true)}
+                                                className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm font-medium transition"
+                                            >
+                                                <Plus size={14} /> إضافة مع خصم
+                                            </button>
+                                        </div>
                                     </li>
                                 ))
                             )}

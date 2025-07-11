@@ -103,7 +103,7 @@ export default function UniversitiesPage() {
     };
 
     return (
-        <div>
+        <div className="space-y-6 mb-60">
             <h1 className="text-xl font-bold text-blue-600 mb-4">الجامعات</h1>
 
             {/* Form */}

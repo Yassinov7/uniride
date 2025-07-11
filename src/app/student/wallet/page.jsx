@@ -59,7 +59,7 @@ export default function StudentWalletPage() {
 
 
     return (
-        <div className="max-w-md mx-auto mt-10 bg-white rounded-lg shadow p-6 text-center space-y-4">
+        <div className="max-w-md mx-auto mt-10 bg-white rounded-lg shadow p-6 text-center space-y-6 mb-60">
             <BadgeDollarSign size={32} className="mx-auto text-blue-600" />
             <h1 className="text-xl font-bold text-blue-600">رصيدك الحالي</h1>
 
