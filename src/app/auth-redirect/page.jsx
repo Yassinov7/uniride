@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
@@ -8,23 +8,21 @@ import { BusFront } from 'lucide-react';
 
 export default function AuthRedirect() {
     const router = useRouter();
-    const { setUser, user } = useUserStore();
+    const { user, setUser } = useUserStore();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user) return;
         const checkAndRedirect = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
+            const { data } = await supabase.auth.getSession();
+            const session = data.session;
+            const userId = session?.user?.id;
 
-            if (!session) {
-                router.push('/login');
+            if (!userId) {
+                router.replace('/login');
                 return;
             }
 
-            const userId = session.user.id;
-
-            let { data: profile, error } = await supabase
+            let { data: profile } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
@@ -38,8 +36,8 @@ export default function AuthRedirect() {
                     .single();
 
                 if (insertError) {
-                    console.error(insertError);
-                    router.push('/login');
+                    console.error('فشل في إنشاء الملف الشخصي:', insertError);
+                    router.replace('/login');
                     return;
                 }
 
@@ -48,15 +46,20 @@ export default function AuthRedirect() {
 
             setUser(profile);
 
-            if (profile.role === 'admin') {
-                router.push('/admin');
-            } else {
-                router.push('/student');
-            }
+            // تأخير بسيط لإتاحة عرض التحميل بسلاسة
+            setTimeout(() => {
+                if (profile.role === 'admin') {
+                    router.replace('/admin');
+                } else {
+                    router.replace('/student');
+                }
+            }, 200); // 200ms فقط لعرض التحميل
         };
 
-        checkAndRedirect();
-    }, [router, setUser, user]);
+        if (!user) {
+            checkAndRedirect();
+        }
+    }, [user]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 text-center p-6">

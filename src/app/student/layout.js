@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useUserStore } from '@/store/userStore';
 import CommonHeader from '@/components/CommonHeader';
 import {
     X,
@@ -17,6 +15,8 @@ import {
     ReceiptTextIcon,
     LogOut
 } from 'lucide-react';
+import AuthProvider from '@/components/AuthProvider';
+import useLogout from '@/hooks/useLogout';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/student', icon: <LayoutDashboard size={18} /> },
@@ -31,13 +31,9 @@ const navItems = [
 
 export default function StudentLayout({ children }) {
     const [open, setOpen] = useState(false);
-    const router = useRouter();
-    const { clearUser } = useUserStore();
+    const logout = useLogout();
 
-    const handleLogout = () => {
-        clearUser();
-        router.push('/login');
-    };
+    
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -62,7 +58,7 @@ export default function StudentLayout({ children }) {
                         ))}
                     </nav>
                     <button
-                        onClick={handleLogout}
+                        onClick={logout}
                         className="bg-orange-600 py-3 flex justify-center items-center gap-2 hover:bg-orange-700 transition w-full"
                     >
                         <LogOut size={18} />
@@ -99,7 +95,7 @@ export default function StudentLayout({ children }) {
                             <button
                                 onClick={() => {
                                     setOpen(false);
-                                    handleLogout();
+                                    logout();
                                 }}
                                 className="block mt-6 bg-orange-600 text-white rounded py-2 w-full hover:bg-orange-700 transition flex items-center justify-center gap-2"
                             >
@@ -111,7 +107,7 @@ export default function StudentLayout({ children }) {
                 )}
 
                 {/* Main Content */}
-                <main className="flex-1 bg-gray-100 p-6">{children}</main>
+                <main className="flex-1 bg-gray-100 p-6"><AuthProvider role="student">{children}</AuthProvider></main>
             </div>
         </div>
     );

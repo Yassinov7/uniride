@@ -9,6 +9,8 @@ import {
     X, University, Bus, Route, Users, BusFront,
     LayoutDashboard, HomeIcon, BadgeDollarSign, Inbox, LogOut
 } from 'lucide-react';
+import AuthProvider from '@/components/AuthProvider';
+import useLogout from '@/hooks/useLogout';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/admin', icon: <LayoutDashboard size={18} /> },
@@ -26,12 +28,8 @@ const navItems = [
 
 export default function AdminLayout({ children }) {
     const [open, setOpen] = useState(false);
-    const router = useRouter();
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push('/login');
-    };
+    const logout = useLogout();
+    
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -54,7 +52,7 @@ export default function AdminLayout({ children }) {
                         ))}
                     </nav>
                     <button
-                        onClick={handleLogout}
+                        onClick={logout}
                         className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
                     >
                         <LogOut size={18} /> تسجيل خروج
@@ -92,7 +90,7 @@ export default function AdminLayout({ children }) {
                             <button
                                 onClick={() => {
                                     setOpen(false);
-                                    handleLogout();
+                                    logout();
                                 }}
                                 className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
                             >
@@ -103,7 +101,7 @@ export default function AdminLayout({ children }) {
                 )}
 
                 {/* Main Content */}
-                <main className="flex-1 bg-gray-100 p-6 ">{children}</main>
+                <main className="flex-1 bg-gray-100 p-6 "><AuthProvider role="admin">{children}</AuthProvider></main>
             </div>
         </div>
     );

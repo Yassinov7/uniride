@@ -1,31 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
 import { Calendar, Clock, BusFront, CheckCircle, ArrowRight } from 'lucide-react';
 import { useLoadingStore } from '@/store/loadingStore';
+import { useUserStore } from '@/store/userStore';
+import { useNextBookingStore } from '@/store/useNextBookingStore';
 
 export default function NextBookingPage() {
-    const [booking, setBooking] = useState(null);
     const { setLoading } = useLoadingStore();
-    const [allBookings, setAllBookings] = useState([]);
-    const [confirmed, setConfirmed] = useState(false);
+    const { user } = useUserStore();
+    const {
+        booking,
+        allBookings,
+        confirmed,
+        setBooking,
+        setAllBookings,
+        setConfirmed,
+        loaded,
+        setLoaded,
+    } = useNextBookingStore();
+
     const router = useRouter();
 
     useEffect(() => {
+        if (!user?.id || loaded) return;
         fetchBooking();
-    }, []);
+    }, [user]);
 
     const fetchBooking = async () => {
+        setLoading(true);
         try {
-            const { data: userData } = await supabase.auth.getUser();
-            const studentId = userData?.user?.id;
-            if (!studentId) return toast.error('لم يتم التعرف على المستخدم');
-
-            setLoading(true);
+            const studentId = user.id;
 
             const { data, error } = await supabase
                 .from('ride_students')
@@ -35,8 +44,8 @@ export default function NextBookingPage() {
             if (error) return toast.error('فشل تحميل البيانات');
 
             const rides = data
-                .filter(r => r.ride_id?.date && r.ride_id?.time)
-                .map(r => ({
+                .filter((r) => r.ride_id?.date && r.ride_id?.time)
+                .map((r) => ({
                     ...r,
                     rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`),
                 }));
@@ -45,9 +54,8 @@ export default function NextBookingPage() {
             const today = now.startOf('day');
 
             const futureRides = rides
-                .filter(r => {
+                .filter((r) => {
                     const rideDate = r.rideDateTime.startOf('day');
-                    // إظهار حجز اليوم حتى الساعة 6 مساءً
                     if (rideDate.isSame(today)) {
                         return now.hour() < 18;
                     }
@@ -55,13 +63,13 @@ export default function NextBookingPage() {
                 })
                 .sort((a, b) => a.rideDateTime - b.rideDateTime);
 
-            const next = futureRides.find(r => r.ride_id.route_type === 'go') || null;
+            const next = futureRides.find((r) => r.ride_id.route_type === 'go') || null;
 
             setBooking(next);
             setAllBookings(futureRides);
+            setLoaded(true); // 🧠 إشارة بعدم الجلب مرة أخرى
             checkIfAlreadyConfirmed(studentId);
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
     };
@@ -75,20 +83,14 @@ export default function NextBookingPage() {
             .eq('student_id', studentId)
             .eq('date', today);
 
-        if (error) {
-            console.error('❌ Error fetching return confirmation:', error.message);
-            return;
-        }
-
-        if (data?.length > 0) {
+        if (!error && data?.length > 0) {
             setConfirmed(true);
         }
     };
 
     const handleConfirm = async () => {
-        const { data: userData } = await supabase.auth.getUser();
-        const studentId = userData?.user?.id;
         const today = dayjs().format('YYYY-MM-DD');
+        const studentId = user.id;
 
         const { data: existing, error: checkError } = await supabase
             .from('return_candidates')

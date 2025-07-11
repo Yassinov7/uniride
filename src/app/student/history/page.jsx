@@ -5,34 +5,34 @@ import { Bus, Clock, CalendarDays, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import { useLoadingStore } from '@/store/loadingStore';
-
+import { useUserStore } from '@/store/userStore';
+import { useStudentRidesHistoryStore } from '@/store/useStudentRidesHistory';
 dayjs.locale('ar');
 
 export default function StudentRidesPage() {
-    const [rides, setRides] = useState([]);
-    const { setLoading } = useLoadingStore();
 
+    const { setLoading } = useLoadingStore();
+    const { user } = useUserStore();
+    const { rides, setRides } = useStudentRidesHistoryStore();
     useEffect(() => {
+        if (rides.length > 0) return;
         fetchRides();
     }, []);
 
     const fetchRides = async () => {
+        if (!user || !user.id) return; // تأكيد إضافي
         setLoading(true);
         try {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-
             const { data } = await supabase
                 .from('ride_students')
                 .select(`
-        ride:ride_id (
-          date,
-          time,
-          route_type,
-          buses(name)
-        )
-      `)
+                ride:ride_id (
+                    date,
+                    time,
+                    route_type,
+                    buses(name)
+                )
+            `)
                 .eq('student_id', user.id);
 
             if (!data) return;
@@ -45,18 +45,18 @@ export default function StudentRidesPage() {
                 .sort((a, b) => b.datetime - a.datetime);
 
             setRides(sorted);
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="max-w-4xl mx-auto p-4 mb-60 space-y-6 text-right" dir="rtl">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <RefreshCw size={20} /> سجل رحلاتي
             </h1>
- 
+
             {rides.length === 0 ? (
                 <p className="text-center text-gray-600 mt-6">لا يوجد رحلات حتى الآن.</p>
             ) : (

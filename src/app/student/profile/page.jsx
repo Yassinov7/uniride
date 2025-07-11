@@ -6,16 +6,16 @@ import toast from 'react-hot-toast';
 import { Pencil, Mail, UserCircle, University, MapPin, Lock, Phone } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { useLoadingStore } from '@/store/loadingStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useUserStore } from '@/store/userStore'; // ✅ استيراد userStore
 
 export default function StudentProfilePage() {
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoadings] = useState(true);
-    const { setLoading } = useLoadingStore();
+    const { user } = useUserStore(); // ✅ المستخدم من الستور
+    const { universities, locations, fetchOptions } = useProfileStore();
+    const { isLoading, setLoading } = useLoadingStore();
+
     const [editOpen, setEditOpen] = useState(false);
     const [passwordOpen, setPasswordOpen] = useState(false);
-
-    const [universities, setUniversities] = useState([]);
-    const [locations, setLocations] = useState([]);
 
     const [form, setForm] = useState({
         full_name: '',
@@ -26,68 +26,32 @@ export default function StudentProfilePage() {
     });
 
     useEffect(() => {
-        fetchProfile();
-        fetchOptions();
-    }, []);
-
-    const fetchProfile = async () => {
-        setLoading(true);
-        try {
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData?.user?.id;
-
-            if (!userId) {
-                toast.error('تعذر التعرف على المستخدم');
-                return;
-            }
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('id, full_name, gender, university_id, location_id,phone, universities(name), locations(name)')
-                .eq('id', userId)
-                .single();
-
-            if (error) {
-                toast.error('فشل تحميل البيانات');
-            } else {
-                setProfile(data);
-                setForm({
-                    full_name: data.full_name || '',
-                    gender: data.gender || '',
-                    university_id: data.university_id || null,
-                    location_id: data.location_id || null,
-                    phone: data.phone || '',
-                });
-            }
-        } finally {
-            setLoadings(false);
+        if (user) {
+            setForm({
+                full_name: user.full_name || '',
+                gender: user.gender || '',
+                university_id: user.university_id || null,
+                location_id: user.location_id || null,
+                phone: user.phone || '',
+            });
             setLoading(false);
         }
 
-    };
-
-    const fetchOptions = async () => {
-        const [{ data: uni }, { data: loc }] = await Promise.all([
-            supabase.from('universities').select('id, name'),
-            supabase.from('locations').select('id, name'),
-        ]);
-
-        setUniversities(uni || []);
-        setLocations(loc || []);
-    };
+        fetchOptions();
+    }, [user]);
 
     const handleUpdate = async () => {
         const { error } = await supabase
             .from('profiles')
             .update(form)
-            .eq('id', profile.id);
+            .eq('id', user.id);
 
         if (error) {
             toast.error('فشل تحديث البيانات');
         } else {
             toast.success('تم تحديث البيانات');
             setEditOpen(false);
-            fetchProfile();
+            location.reload(); // لإعادة تحميل user من AuthProvider
         }
     };
 
@@ -106,16 +70,24 @@ export default function StudentProfilePage() {
     };
 
     const getAvatar = () => {
-        if (profile.gender === 'male') return '/avatars/male.jpg';
-        if (profile.gender === 'female') return '/avatars/female.jpg';
+        if (user.gender === 'male') return '/avatars/male.jpg';
+        if (user.gender === 'female') return '/avatars/female.jpg';
         return '/avatars/notsetgender.svg';
     };
 
-    if (loading) return <p className="text-center mt-10 text-gray-500">جارٍ تحميل البيانات...</p>;
+    const getUniversityName = (id) =>
+        universities.find((u) => u.id === id)?.name || 'غير مُحددة';
+
+    const getLocationName = (id) =>
+        locations.find((l) => l.id === id)?.name || 'غير مُحددة';
+
+    if (isLoading || !user) return <p className="text-center mt-10 text-gray-500">جارٍ تحميل البيانات...</p>;
+
 
     return (
-        <div className="max-w-2xl mx-auto mt-10 bg-white p-6 shadow rounded space-y-6">
+        <div className="max-w-2xl mb-60 mx-auto mt-10 bg-white p-6 shadow rounded space-y-6">
             <h1 className="text-xl font-bold text-blue-700 text-center">الملف الشخصي</h1>
+
             <div className="flex justify-center">
                 <img
                     src={getAvatar()}
@@ -124,36 +96,22 @@ export default function StudentProfilePage() {
                 />
             </div>
 
-            <div className="space-y-6 mb-60">
-                <div className="flex items-center gap-3 text-gray-700">
-                    <UserCircle className="text-primary" />
-                    <span className="font-semibold">الاسم الكامل:</span>
-                    <span>{profile.full_name || <span className="text-red-500">غير مُدخل</span>}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-gray-700">
-                    <Phone className="text-primary" />
-                    <span className="font-semibold">رقم الهاتف:</span>
-                    <span>{profile.phone || <span className="text-red-500">غير مُدخل</span>}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-gray-700">
-                    <Mail className="text-primary" />
-                    <span className="font-semibold">الصفة:</span>
-                    <span>{profile.gender === 'male' ? 'طالب' : profile.gender === 'female' ? 'طالبة' : <span className="text-red-500">غير مُدخل</span>}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-gray-700">
-                    <University className="text-primary" />
-                    <span className="font-semibold">الجامعة:</span>
-                    <span>{profile.universities?.name || <span className="text-red-500">غير مُحددة</span>}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-gray-700">
-                    <MapPin className="text-primary" />
-                    <span className="font-semibold">المنطقة:</span>
-                    <span>{profile.locations?.name || <span className="text-red-500">غير مُحددة</span>}</span>
-                </div>
+            <div className="space-y-3 text-gray-700">
+                <InfoRow icon={<UserCircle />} label="الاسم الكامل" value={user.full_name} />
+                <InfoRow icon={<Phone />} label="رقم الهاتف" value={user.phone} />
+                <InfoRow
+                    icon={<Mail />}
+                    label="الصفة"
+                    value={
+                        user.gender === 'male'
+                            ? 'طالب'
+                            : user.gender === 'female'
+                                ? 'طالبة'
+                                : null
+                    }
+                />
+                <InfoRow icon={<University />} label="الجامعة" value={getUniversityName(user.university_id)} />
+                <InfoRow icon={<MapPin />} label="المنطقة" value={getLocationName(user.location_id)} />
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 justify-center mt-6">
@@ -174,7 +132,7 @@ export default function StudentProfilePage() {
                 </button>
             </div>
 
-            {/* تعديل البيانات */}
+            {/* Modal التعديل */}
             {editOpen && (
                 <Modal title="تعديل الملف الشخصي" onClose={() => setEditOpen(false)}>
                     <div className="space-y-4">
@@ -189,7 +147,7 @@ export default function StudentProfilePage() {
                         <input
                             type="tel"
                             className="w-full border rounded px-3 py-2"
-                            placeholder="رقم الهاتف (مثال: 0998877665)"
+                            placeholder="رقم الهاتف"
                             value={form.phone}
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         />
@@ -204,37 +162,28 @@ export default function StudentProfilePage() {
                             <option value="female">طالبة</option>
                         </select>
 
-
                         <select
                             className="w-full border rounded px-3 py-2"
                             value={form.university_id || ''}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    university_id: e.target.value || null,
-                                })
-                            }
+                            onChange={(e) => setForm({ ...form, university_id: e.target.value || null })}
                         >
                             <option disabled value="">اختر الجامعة</option>
                             {universities.map((u) => (
                                 <option key={u.id} value={u.id}>{u.name}</option>
                             ))}
                         </select>
+
                         <select
                             className="w-full border rounded px-3 py-2"
                             value={form.location_id !== null ? String(form.location_id) : ''}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    location_id: e.target.value ? Number(e.target.value) : null,
-                                })
-                            }
+                            onChange={(e) => setForm({ ...form, location_id: e.target.value ? Number(e.target.value) : null })}
                         >
                             <option disabled value="">اختر المنطقة</option>
                             {locations.map((l) => (
                                 <option key={l.id} value={l.id}>{l.name}</option>
                             ))}
                         </select>
+
                         <button
                             onClick={handleUpdate}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
@@ -245,7 +194,7 @@ export default function StudentProfilePage() {
                 </Modal>
             )}
 
-            {/* تغيير كلمة المرور */}
+            {/* Modal تغيير كلمة المرور */}
             {passwordOpen && (
                 <Modal title="تغيير كلمة المرور" onClose={() => setPasswordOpen(false)}>
                     <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -266,6 +215,17 @@ export default function StudentProfilePage() {
                     </form>
                 </Modal>
             )}
+        </div>
+    );
+}
+
+// ✅ مكون فرعي لعرض كل صف بيانات
+function InfoRow({ icon, label, value }) {
+    return (
+        <div className="flex items-center gap-3">
+            <span className="text-primary">{icon}</span>
+            <span className="font-semibold">{label}:</span>
+            <span>{value || <span className="text-red-500">غير مُدخل</span>}</span>
         </div>
     );
 }
