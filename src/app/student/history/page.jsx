@@ -56,7 +56,7 @@ export default function StudentRidesPage() {
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <RefreshCw size={20} /> سجل رحلاتي
             </h1>
-
+ 
             {rides.length === 0 ? (
                 <p className="text-center text-gray-600 mt-6">لا يوجد رحلات حتى الآن.</p>
             ) : (
