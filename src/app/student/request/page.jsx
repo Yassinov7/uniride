@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 
-import { BookAlert, DollarSign, Clock4 } from 'lucide-react';
+import { BookAlert, DollarSign, Clock4, RotateCcw } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useRideRequestStore } from '@/store/rideRequestStore';
 
@@ -163,9 +163,9 @@ export default function RideRequestPage() {
                 <button
                     onClick={fetchRequests}
                     disabled={loadingreq}
-                    className="w-32 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition duration-200"
-                >
-                    {loadingreq ? 'جاري التحديث...' : '🔄 تحديث'}
+                    className="flex items-center gap-1 text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition duration-200"
+                >   <RotateCcw size={16} className={loadingreq ? 'animate-spin' : ''} />
+                    {loadingreq ? 'جاري التحديث...' : 'تحديث'}
                 </button>
             </div>
 

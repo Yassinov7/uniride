@@ -1,7 +1,14 @@
-// useStudentRidesHistory.js
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export const useStudentRidesHistoryStore = create((set) => ({
-    rides: [],
-    setRides: (rides) => set({ rides }),
-}));
+export const useStudentRidesHistoryStore = create(
+    persist(
+        (set) => ({
+            rides: [],
+            setRides: (rides) => set({ rides }),
+        }),
+        {
+            name: 'student-rides-history',
+        }
+    )
+);

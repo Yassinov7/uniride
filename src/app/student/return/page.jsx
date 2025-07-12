@@ -4,24 +4,24 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
-import { Calendar, Clock, BusFront } from 'lucide-react';
-import { useLoadingStore } from '@/store/loadingStore';
+import { Calendar, Clock, BusFront, RotateCcw } from 'lucide-react';
+import { useUserStore } from '@/store/userStore';
 
 export default function ReturnRidePage() {
     const [booking, setBooking] = useState(null);
-    const { setLoading } = useLoadingStore();
- 
+    const [loaded, setLoaded] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const { user } = useUserStore();
+
     useEffect(() => {
+        if (!user?.id || loaded) return;
         fetchReturnRide();
-    }, []);
+    }, [user, loaded]);
 
     const fetchReturnRide = async () => {
-        setLoading(true); // 🌀 إظهار الـ spinner
-
+        setRefreshing(true);
         try {
-            const { data: userData } = await supabase.auth.getUser();
-            const studentId = userData?.user?.id;
-
+            const studentId = user?.id;
             if (!studentId) {
                 toast.error('لم يتم التعرف على المستخدم');
                 return;
@@ -29,14 +29,7 @@ export default function ReturnRidePage() {
 
             const { data, error } = await supabase
                 .from('ride_students')
-                .select(`
-                ride_id (
-                    id,
-                    date,
-                    time,
-                    route_type
-                )
-            `)
+                .select('ride_id(id, date, time, route_type)')
                 .eq('student_id', studentId);
 
             if (error) {
@@ -46,25 +39,37 @@ export default function ReturnRidePage() {
 
             const now = dayjs();
 
-            const returnRides = data
+            const returnRides = (data || [])
                 .filter(r => r.ride_id?.route_type === 'return')
                 .map(r => ({
                     ...r,
-                    rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`)
+                    rideDateTime: dayjs(`${r.ride_id.date}T${r.ride_id.time}`),
                 }))
                 .filter(r => r.rideDateTime.isAfter(now.startOf('day')))
                 .sort((a, b) => a.rideDateTime - b.rideDateTime);
 
             setBooking(returnRides[0] || null);
+            setLoaded(true);
         } finally {
-            setLoading(false); // ✅ إخفاء الـ spinner
+            setRefreshing(false)
         }
     };
 
-
     return (
-        <div className="max-w-lg mx-auto mt-10 mb-60 bg-white shadow rounded-lg p-6 space-y-4">
-            <h1 className="text-xl font-bold text-blue-600 text-center">رحلة العودة القادمة</h1>
+        <div className="max-w-lg mx-auto mt-10 mb-60 bg-white shadow rounded-lg p-6 space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-xl font-bold text-blue-600">رحلة العودة القادمة</h1>
+                <button
+                    onClick={() => {
+                        setLoaded(false);
+                        fetchReturnRide();
+                    }}
+                    className="flex items-center gap-1 text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition duration-200"
+                >
+                    <RotateCcw size={16} className={refreshing ? 'animate-spin' : ''} />
+                    {refreshing ? 'جاري التحديث...' : 'تحديث'}
+                </button>
+            </div>
 
             {booking ? (
                 <div className="space-y-3 text-center">

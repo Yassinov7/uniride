@@ -9,7 +9,6 @@ import { BusFront } from 'lucide-react';
 export default function AuthRedirect() {
     const router = useRouter();
     const { user, setUser } = useUserStore();
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkAndRedirect = async () => {
