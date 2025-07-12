@@ -84,7 +84,7 @@ export default function StudentLayout({ children }) {
                 {/* Sidebar - Desktop */}
                 <aside className="hidden md:flex flex-col w-64 bg-blue-600 text-white shadow-lg">
                     <div className="p-6 text-xl font-bold border-b border-blue-500">
-                        منطقة الطالب
+                        لوحة تحكم الطالب
                     </div>
 
                     <nav className="flex-1 px-4 py-6 space-y-2">
