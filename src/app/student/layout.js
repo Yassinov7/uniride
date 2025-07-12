@@ -97,7 +97,7 @@ export default function StudentLayout({ children }) {
                                     setOpen(false);
                                     logout();
                                 }}
-                                className="block mt-6 bg-orange-600 text-white rounded py-2 w-full hover:bg-orange-700 transition flex items-center justify-center gap-2"
+                                className="mt-6 bg-orange-600 text-white rounded py-2 w-full hover:bg-orange-700 transition flex items-center justify-center gap-2"
                             >
                                 <LogOut size={18} />
                                 تسجيل الخروج

@@ -1,31 +1,45 @@
 'use client';
+
 import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { BookAlert, DollarSign, Clock4 } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-import { useLoadingStore } from '@/store/loadingStore';
+
+import { BookAlert, DollarSign, Clock4 } from 'lucide-react';
+import { useUserStore } from '@/store/userStore';
+import { useRideRequestStore } from '@/store/rideRequestStore';
 
 dayjs.locale('ar');
+
 const weekdays = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+
 const getStartFriday = (dateStr) => {
     const input = dayjs(dateStr);
     const dayOfWeek = input.day(); // 0: الأحد .. 6: السبت
-    const daysToSubtract = (dayOfWeek + 2) % 7; // لحساب الفرق إلى الجمعة
+    const daysToSubtract = (dayOfWeek + 2) % 7;
     return input.subtract(daysToSubtract, 'day');
 };
 
-
 export default function RideRequestPage() {
+    const {
+        requests,
+        setRequests,
+        loadingreq,
+        setLoadingreq,
+        timingGroup,
+        timingData,
+        setTimingGroup,
+        setTimingData,
+    } = useRideRequestStore();
+
     const [startDate, setStartDate] = useState('');
     const [selectedDays, setSelectedDays] = useState([]);
-    const [loading, setLoadings] = useState(false);
-    const { setLoading } = useLoadingStore();
-    const [requests, setRequests] = useState([]);
-    const [timingGroup, setTimingGroup] = useState(null); // group_id
-    const [timingData, setTimingData] = useState([]); // [{request_id, date, go_time, return_time}]
+    const [submitting, setSubmitting] = useState(false);
     const [savingTimings, setSavingTimings] = useState(false);
+    const { user } = useUserStore();
+
     const groupByGroupId = (requests) => {
         const grouped = {};
         for (const req of requests) {
@@ -39,20 +53,33 @@ export default function RideRequestPage() {
             }
             grouped[req.group_id].dates.push(req.date);
         }
-        return Object.values(grouped);
+        return Object.values(grouped).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     };
+
+    const timingRef = useRef(null);
+
+    useEffect(() => {
+        if (timingGroup && timingRef.current) {
+            // التمرير بسلاسة
+            timingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [timingGroup]);
 
     useEffect(() => {
         fetchRequests();
     }, []);
 
     const fetchRequests = async () => {
-        setLoading(true);
-        try{
-        const { data } = await supabase.from('ride_requests').select('*').order('created_at', { ascending: false });
-        setRequests(groupByGroupId(data || []));
-        }   finally{
-            setLoading(false);
+        setLoadingreq(true);
+        try {
+            const { data } = await supabase
+                .from('ride_requests')
+                .select('*')
+                .order('created_at', { ascending: false });
+            const grouped = groupByGroupId(data || []);
+            setRequests(grouped);
+        } finally {
+            setLoadingreq(false);
         }
     };
 
@@ -102,13 +129,12 @@ export default function RideRequestPage() {
             return;
         }
 
-        setLoadings(true);
-        const { data: userData, error: authError } = await supabase.auth.getUser();
-        const studentId = userData?.user?.id;
+        setSubmitting(true);
+        const studentId = user?.id;
 
-        if (!studentId || authError) {
+        if (!studentId) {
             toast.error('فشل جلب معلومات الحساب');
-            setLoadings(false);
+            setSubmitting(false);
             return;
         }
 
@@ -119,7 +145,7 @@ export default function RideRequestPage() {
         const inserts = dates.map((date) => ({ student_id: studentId, date, group_id }));
         const { error } = await supabase.from('ride_requests').insert(inserts);
 
-        setLoadings(false);
+        setSubmitting(false);
 
         if (error) toast.error('حدث خطأ أثناء الحجز');
         else {
@@ -132,7 +158,16 @@ export default function RideRequestPage() {
 
     return (
         <div className="max-w-xl mb-60 mx-auto space-y-6">
-            <h1 className="text-xl font-bold text-blue-600">طلب حجز أسبوعي</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-xl font-bold text-blue-600">طلب حجز أسبوعي</h1>
+                <button
+                    onClick={fetchRequests}
+                    disabled={loadingreq}
+                    className="w-32 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition duration-200"
+                >
+                    {loadingreq ? 'جاري التحديث...' : '🔄 تحديث'}
+                </button>
+            </div>
 
             {/* إشعارات */}
             <div className="space-y-3 text-sm text-gray-800 bg-yellow-50 border border-yellow-200 rounded p-4">
@@ -153,94 +188,112 @@ export default function RideRequestPage() {
             </div>
 
             {/* النموذج */}
-            <div className="bg-white p-4 rounded shadow space-y-4">
-                <label className="block text-sm font-medium">حدد أي يوم من الأسبوع (من الجمعة إلى الخميس)</label>
+            <div className="bg-white p-4 rounded-xl shadow space-y-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    📅 اختر تاريخًا ضمن الأسبوع (من الجمعة إلى الخميس)
+                </label>
                 <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 {startDate && (
                     <>
-                        <p className="font-medium text-sm mt-4">اختر الأيام المطلوبة من نفس الأسبوع:</p>
-                        <div className="grid grid-cols-2 gap-2">
+                        <p className="font-medium text-sm mt-2 text-gray-700">📌 اختر الأيام المطلوبة:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
                             {weekdays.map((name, i) => {
                                 const base = getStartFriday(startDate);
                                 const date = base.add(i, 'day');
+                                const selected = selectedDays.includes(i);
                                 return (
-                                    <label key={i} className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedDays.includes(i)}
-                                            onChange={() => handleToggleDay(i)}
-                                        />
-                                        {name} - {date.format('YYYY-MM-DD')}
-                                    </label>
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => handleToggleDay(i)}
+                                        className={`border rounded-lg p-3 text-sm text-center transition duration-200 ${selected
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-300'
+                                            }`}
+                                    >
+                                        <div className="font-bold">{name}</div>
+                                        <div className="text-xs mt-1">{date.format('YYYY-MM-DD')}</div>
+                                    </button>
                                 );
                             })}
-
                         </div>
                     </>
                 )}
 
                 <button
                     onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                    disabled={submitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition duration-200"
                 >
-                    {loading ? 'جاري الإرسال...' : 'إرسال الطلب'}
+                    {submitting ? '⏳ جاري الإرسال...' : '🚀 إرسال الطلب'}
                 </button>
             </div>
-            <div className="overflow-x-auto mt-8">
-                <table className="min-w-full text-sm border rounded">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border px-3 py-2 whitespace-nowrap">التواريخ المطلوبة</th>
-                            <th className="border px-3 py-2 whitespace-nowrap">الحالة</th>
-                            <th className="border px-3 py-2 whitespace-nowrap">تم الإرسال في</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+
+
+            {/* عرض الطلبات */}
+            <div className="mt-10 space-y-6">
+                {requests.length === 0 ? (
+                    <div className="text-center text-gray-500 py-6 border rounded bg-white">
+                        لا يوجد طلبات حالياً
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
                         {requests.map((group) => (
-                            <tr key={group.group_id} className="text-center hover:bg-gray-50">
-                                <td className="border px-3 py-2 text-right text-xs sm:text-sm">
+                            <div
+                                key={group.group_id}
+                                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-2"
+                            >
+                                <div className="text-sm text-gray-600 font-medium flex items-center gap-2">
+                                    🗓️ التواريخ المطلوبة:
+                                </div>
+                                <div className="text-sm text-gray-800 leading-relaxed">
                                     {group.dates
-                                        .map(date => {
+                                        .map((date) => {
                                             const d = dayjs(date);
                                             return `${d.format('dddd')} - ${d.format('YYYY/MM/DD')}`;
                                         })
                                         .join('، ')}
-                                </td>
-                                <td className="border px-3 py-2">
-                                    {group.status === 'approved'
-                                        ? <button
-                                            onClick={() => handleOpenTimingDialog(group.group_id)}
-                                            className="mt-2 text-sm bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600"
-                                        >
-                                            تحديد توقيت الذهاب والعودة
-                                        </button>
-                                        : group.status === 'rejected'
-                                            ? '❌ مرفوض'
-                                            : '⏳ قيد الانتظار'}
-                                </td>
-                                <td className="border px-3 py-2 text-xs sm:text-sm">
-                                    {dayjs(group.created_at).format('YYYY-MM-DD HH:mm')}
-                                </td>
-                            </tr>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2">
+                                    <div className="text-sm font-medium">
+                                        {group.status === 'approved' ? (
+                                            <span className="inline-flex items-center gap-2 text-orange-600 font-semibold">
+                                                ✅ مقبول
+                                                <button
+                                                    onClick={() => handleOpenTimingDialog(group.group_id)}
+                                                    className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded transition"
+                                                >
+                                                    تحديد توقيت الذهاب والعودة
+                                                </button>
+                                            </span>
+                                        ) : group.status === 'rejected' ? (
+                                            <span className="text-red-500 font-semibold">❌ مرفوض</span>
+                                        ) : (
+                                            <span className="text-gray-500 font-semibold">⏳ قيد الانتظار</span>
+                                        )}
+                                    </div>
+
+                                    <div className="text-xs text-gray-400 sm:text-right">
+                                        📤 أُرسل في: {dayjs(group.created_at).format('YYYY-MM-DD HH:mm')}
+                                    </div>
+                                </div>
+                            </div>
                         ))}
-                        {requests.length === 0 && (
-                            <tr>
-                                <td colSpan={3} className="text-gray-500 py-4 text-center">
-                                    لا يوجد طلبات حالياً
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                    </div>
+                )}
+
+                {/* Dialog التوقيت */}
                 {timingGroup && (
-                    <div className="mt-6 bg-white border border-blue-200 rounded-lg p-4 space-y-4 shadow">
+                    <div
+                        ref={timingRef}
+                        className="bg-white border border-blue-200 rounded-lg p-4 shadow space-y-4">
                         <h2 className="text-base font-bold text-blue-600 flex items-center gap-2">
                             <Clock4 size={18} /> تحديد توقيت الذهاب والعودة
                         </h2>
@@ -302,11 +355,8 @@ export default function RideRequestPage() {
                         </div>
                     </div>
                 )}
-
             </div>
 
-
         </div>
-
     );
 }
