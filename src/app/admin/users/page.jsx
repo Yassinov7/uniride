@@ -58,29 +58,37 @@ export default function AdminStudentsPage() {
     };
 
     return (
-        <div className="min-w-0 text-right space-y-6 mb-60" >
-            <h1 className="text-xl font-bold mb-6 text-blue-700">جميع الطلاب</h1>
-            <div className="flex justify-end">
-                <button
-                    onClick={handleRefresh}
-                    className="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 text-sm mb-2"
-                >
-                    تحديث البيانات
-                </button>
+        <div className="space-y-6 mb-60 min-w-0 text-right">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className="text-xl font-bold text-blue-700">جميع الطلاب</h1>
+                <div className="flex gap-2 items-center">
+                    <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
+                        عدد الطلاب: {filtered.filter((s) =>
+                            s.full_name?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+                        ).length}
+                    </span>
+                    <button
+                        onClick={handleRefresh}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 text-sm transition"
+                    >
+                        تحديث البيانات
+                    </button>
+                </div>
             </div>
 
             {/* حقل البحث */}
-            <div className="mb-4 flex justify-start">
+            <div className="mb-2">
                 <input
                     type="text"
                     placeholder="ابحث باسم الطالب..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border px-4 py-2 min-w-0 rounded w-full sm:w-64"
+                    className="w-full sm:w-64 border px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-4">
-                {/* حقل الجامعة */}
+
+            {/* الفلاتر + زر التصدير */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">الجامعة</label>
                     <select
@@ -95,7 +103,6 @@ export default function AdminStudentsPage() {
                     </select>
                 </div>
 
-                {/* حقل المنطقة */}
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">المنطقة</label>
                     <select
@@ -110,7 +117,6 @@ export default function AdminStudentsPage() {
                     </select>
                 </div>
 
-                {/* حقل الجنس */}
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">الجنس</label>
                     <select
@@ -124,7 +130,6 @@ export default function AdminStudentsPage() {
                     </select>
                 </div>
 
-                {/* زر التصدير */}
                 <div className="flex flex-col justify-end">
                     <button
                         onClick={exportToExcel}
@@ -133,23 +138,20 @@ export default function AdminStudentsPage() {
                         <FileDown size={18} /> تصدير إلى Excel
                     </button>
                 </div>
-            </div>
-
-
-
-
-            {/* الجدول */}
-            <div className="overflow-x-auto border rounded">
+            </div><div className="overflow-x-auto border rounded">
                 <table className="min-w-full text-sm text-center">
                     <thead className="bg-blue-100 text-blue-800">
                         <tr>
+                            <th className="p-1">#</th>
                             <th className="p-1">الاسم</th>
+                            <th className="p-1">رقم الطالب</th>
                             <th className="p-1">رقم الهاتف</th>
                             <th className="p-1">الجنس</th>
                             <th className="p-1">الجامعة</th>
                             <th className="p-1">المنطقة</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {filtered
                             .filter((s) =>
@@ -157,7 +159,9 @@ export default function AdminStudentsPage() {
                             )
                             .map((s, i) => (
                                 <tr key={i} className="border-b hover:bg-orange-200">
+                                    <td className="p-1">{i + 1}</td>
                                     <td className="p-1">{s.full_name}</td>
+                                    <td className="p-1">{s.id}</td>
                                     <td className="p-1">
                                         {s.phone ? (
                                             <a href={`tel:${s.phone}`} className="text-orange-600 hover:text-orange-800">
