@@ -83,7 +83,7 @@ export default function StudentLayout({ children }) {
 
             <div className="flex flex-1 min-h-0">
                 {/* Sidebar - Desktop */}
-                <aside className="hidden md:flex flex-col w-64 h-full bg-blue-600 text-white shadow-lg overflow-y-auto">
+                <aside className="hidden pb-18 md:flex flex-col w-64 h-full bg-blue-600 text-white shadow-lg overflow-y-auto">
                     <div className="p-6 text-xl font-bold border-b border-blue-500">
                         لوحة تحكم الطالب
                     </div>
@@ -117,7 +117,7 @@ export default function StudentLayout({ children }) {
                     onClick={() => setOpen(false)}
                 >
                     <aside
-                        className={`fixed top-0 left-0 w-72 h-full bg-blue-600 text-white shadow-xl transform transition-transform duration-300 z-50 overflow-y-auto ${open ? 'translate-x-0' : '-translate-x-full'}`}
+                        className={`pb-18 fixed top-0 left-0 w-72 h-full bg-blue-600 text-white shadow-xl transform transition-transform duration-300 z-50 ${open ? 'translate-x-0' : '-translate-x-full'}`}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center p-4 border-b border-blue-500">
@@ -127,7 +127,7 @@ export default function StudentLayout({ children }) {
                             </button>
                         </div>
 
-                        <nav className="flex-1 px-4 py-6 space-y-2">
+                        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.href}
@@ -152,7 +152,6 @@ export default function StudentLayout({ children }) {
                             تسجيل الخروج
                         </button>
                     </aside>
-
                 </div>
 
                 {/* Main Content */}

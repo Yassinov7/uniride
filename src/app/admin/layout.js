@@ -85,9 +85,9 @@ export default function AdminLayout({ children }) {
         <div className="flex flex-col min-h-screen bg-gray-100" dir="rtl">
             <CommonHeader onMenuClick={() => setOpen(true)} />
 
-            <div className="flex flex-1 min-h-0">
+            <div className=" flex flex-1 min-h-0">
                 {/* Sidebar - Desktop */}
-                <aside className="hidden md:flex flex-col w-64 h-full bg-blue-600 text-white shadow-lg overflow-y-auto">
+                <aside className="pb-5 hidden md:flex flex-col w-64 h-full bg-blue-600 text-white shadow-lg overflow-y-auto">
                     {/* العنوان */}
                     <div className="p-6 text-xl font-bold border-b border-blue-500">
                         لوحة تحكم المسؤول
@@ -119,7 +119,7 @@ export default function AdminLayout({ children }) {
 
                 {/* Mobile Drawer */}
                 <div
-                    className={`fixed inset-0 z-40 transition-opacity duration-300 ${open ? 'bg-black/30 backdrop-blur-sm' : 'pointer-events-none opacity-0'}`}
+                    className={`pb-5 fixed inset-0 z-40 transition-opacity duration-300 ${open ? 'bg-black/30 backdrop-blur-sm' : 'pointer-events-none opacity-0'}`}
                     onClick={() => setOpen(false)}
                 >
                     <aside

@@ -51,13 +51,13 @@ export default function AuthRedirect() {
                 } else {
                     router.replace('/student');
                 }
-            }, 200);
+            }, 100);
         };
 
         if (!user) {
             const timeout = setTimeout(() => {
                 checkAndRedirect();
-            }, 1000); // تأخير بدء العملية بـ 1 ثانية
+            }, 100); // تأخير بدء العملية بـ 1 ثانية
 
             return () => clearTimeout(timeout);
         }
