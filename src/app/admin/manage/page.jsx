@@ -119,7 +119,7 @@ export default function RidesManagement() {
                     student_id: student.student_id,
                     amount: fare,
                     description: 'إستعادة الرصيد بعد إزالة من الرحلة',
-                    created_by: user?.id,
+                    created_by: user?.id || null,
                 });
             }
 
@@ -260,7 +260,7 @@ export default function RidesManagement() {
                     student_id: studentId,
                     amount: -fare,
                     description: 'خصم بعد إضافة الطالب الى الرحلة',
-                    created_by: user?.id,
+                    created_by: user?.id || null,
                 });
             }
 

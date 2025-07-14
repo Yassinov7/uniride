@@ -196,7 +196,7 @@ export default function CreateGoRidePage() {
                         student_id,
                         amount: -fare,
                         description: 'أجرة رحلة ذهاب/إياب',
-                        created_by: user.id,
+                        created_by: user?.id || null,
                     });
 
                     await supabase
