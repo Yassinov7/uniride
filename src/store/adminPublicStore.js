@@ -9,6 +9,7 @@ export const useAdminPublicStore = create(
             buses: [],
             locations: [],
             universities: [],
+            students: [],
             loading: false,
 
             fetchBuses: async () => {
@@ -31,6 +32,21 @@ export const useAdminPublicStore = create(
                 if (!error) set({ universities: data });
                 set({ loading: false });
             },
+            fetchStudents: async () => {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select(`
+                            full_name, gender, phone,
+                            universities(name),
+                            locations(name)
+                            `)
+                    .eq('role', 'student');
+
+                if (!error) {
+                    set({ students: data || [] });
+                }
+            },
+
         }),
         {
             name: 'public-store', // key in localStorage
@@ -39,6 +55,7 @@ export const useAdminPublicStore = create(
                 buses: state.buses,
                 locations: state.locations,
                 universities: state.universities,
+                students: state.students,
             }),
         }
     )

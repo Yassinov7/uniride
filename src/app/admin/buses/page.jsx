@@ -101,7 +101,12 @@ export default function BusesPage() {
             {/* زر التحديث */}
             <div className="flex justify-end mb-4">
                 <button
-                    onClick={fetchBuses}
+                    onClick={async () => {
+                        const toastId = toast.loading('جاري التحديث...');
+                        await fetchBuses();
+                        toast.dismiss(toastId);
+                        toast.success('تم تحديث قائمة الباصات');
+                    }}
                     className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
                 >
                     تحديث البيانات

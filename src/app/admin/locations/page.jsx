@@ -89,7 +89,12 @@ export default function LocationsPage() {
 
             <div className="flex justify-end">
                 <button
-                    onClick={fetchLocations}
+                    onClick={async () => {
+                        const toastId = toast.loading('جاري التحديث...');
+                        await fetchLocations();
+                        toast.dismiss(toastId);
+                        toast.success('تم تحديث قائمة المناطق');
+                    }}
                     className=" mx-2 bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
                 >
                     تحديث البيانات

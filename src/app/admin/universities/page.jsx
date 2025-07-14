@@ -52,10 +52,10 @@ export default function UniversitiesPage() {
 
     const handleDelete = async (id) => {
         setLoading(true);
-        try{
+        try {
             const { error } = await supabase.from('universities').delete().eq('id', id);
             if (error) throw error;
-        }catch (error) {
+        } catch (error) {
             toast.error('فشل في الحذف');
         } finally {
             toast.success('تم الحذف بنجاح');
@@ -81,13 +81,13 @@ export default function UniversitiesPage() {
         }
 
         setLoading(true);
-        try{
+        try {
             const { error } = await supabase
-            .from('universities')
-            .update({ name: editName, working_days: editDays })
-            .eq('id', editingUniv.id);
+                .from('universities')
+                .update({ name: editName, working_days: editDays })
+                .eq('id', editingUniv.id);
             if (error) throw error;
-        }catch (error) {
+        } catch (error) {
             toast.error('فشل التحديث');
         } finally {
             toast.success('تم التحديث بنجاح');
@@ -104,7 +104,12 @@ export default function UniversitiesPage() {
             {/* زر تحديث */}
             <div className="flex justify-end mb-2">
                 <button
-                    onClick={fetchUniversities}
+                    onClick={async () => {
+                        const toastId = toast.loading('جاري التحديث...');
+                        await fetchUniversities();
+                        toast.dismiss(toastId);
+                        toast.success('تم تحديث قائمة الجامعات');
+                    }}
                     className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
                 >
                     تحديث البيانات

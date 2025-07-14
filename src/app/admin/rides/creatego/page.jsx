@@ -242,16 +242,7 @@ export default function CreateGoRidePage() {
                 </div>
                 <div>
                     <label className="font-semibold text-blue-700 flex items-center gap-1"><Bus size={16} /> الباص</label>
-                    {/* <select
-                        className="w-full border rounded p-2"
-                        value={busId}
-                        onChange={(e) => setBusId(e.target.value)}
-                    >
-                        <option value="">اختر باص</option>
-                        {buses.map((b) => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select> */}
+                    
                     <select
                         className="w-full border rounded p-2"
                         value={busId}

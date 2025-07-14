@@ -5,6 +5,7 @@ import { Check, X, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import { useLoadingStore } from '@/store/loadingStore';
+import toast from 'react-hot-toast';
 
 dayjs.locale('ar');
 
@@ -106,7 +107,19 @@ export default function AdminRequestsPage() {
   return (
     <div className="max-w-6xl mx-auto mb-60 p-4 space-y-6">
       <h1 className="text-xl font-bold text-blue-600">طلبات الحجز</h1>
-
+      <div className="flex justify-end">
+        <button
+          onClick={async () => {
+            const toastId = toast.loading('جاري تحديث الطلبات...');
+            await fetchRequests();
+            toast.dismiss(toastId);
+            toast.success('تم تحديث الطلبات');
+          }}
+          className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
+        >
+          تحديث البيانات
+        </button>
+      </div>
       {/* الفلاتر */}
       <div className="grid sm:grid-cols-3 gap-4">
         <select className="p-2 border rounded" onChange={(e) => setFilters({ ...filters, university: e.target.value })}>
