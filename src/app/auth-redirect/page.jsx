@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
@@ -45,20 +45,24 @@ export default function AuthRedirect() {
 
             setUser(profile);
 
-            // تأخير بسيط لإتاحة عرض التحميل بسلاسة
             setTimeout(() => {
                 if (profile.role === 'admin') {
                     router.replace('/admin');
                 } else {
                     router.replace('/student');
                 }
-            }, 200); // 200ms فقط لعرض التحميل
+            }, 200);
         };
 
         if (!user) {
-            checkAndRedirect();
+            const timeout = setTimeout(() => {
+                checkAndRedirect();
+            }, 1000); // تأخير بدء العملية بـ 1 ثانية
+
+            return () => clearTimeout(timeout);
         }
     }, [user]);
+
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 text-center p-6">
