@@ -1,40 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { PlusCircle, Pencil, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLoadingStore } from '@/store/loadingStore';
+import { useAdminPublicStore } from '@/store/adminPublicStore';
+import { supabase } from '@/lib/supabase';
 
 export default function LocationsPage() {
-    const [locations, setLocations] = useState([]);
     const { setLoading } = useLoadingStore();
+    const { locations, fetchLocations } = useAdminPublicStore();
     const [showForm, setShowForm] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
     const [form, setForm] = useState({ name: '', fare: '' });
 
     useEffect(() => {
-        fetchLocations();
+        if (locations.length === 0) fetchLocations();
     }, []);
-
-    const fetchLocations = async () => {
-        setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('locations')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setLocations(data);
-        } catch (err) {
-            console.error(err);
-            toast.error('حدث خطأ أثناء جلب المناطق');
-        } finally {
-            setLoading(false);
-        }
-    };
-
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -71,7 +53,7 @@ export default function LocationsPage() {
             setForm({ name: '', fare: '' });
             setEditingLocation(null);
             setShowForm(false);
-            await fetchLocations();
+            await fetchLocations(); // تحديث البيانات من الستيت
         } catch (err) {
             console.error(err);
             toast.error('حدث خطأ أثناء حفظ البيانات');
@@ -79,8 +61,6 @@ export default function LocationsPage() {
             setLoading(false);
         }
     };
-
-
 
     const handleDelete = async (id) => {
         setLoading(true);
@@ -97,8 +77,6 @@ export default function LocationsPage() {
         }
     };
 
-
-
     const startEdit = (location) => {
         setForm({ name: location.name, fare: location.fare });
         setEditingLocation(location);
@@ -110,6 +88,12 @@ export default function LocationsPage() {
             <h1 className="text-xl font-bold text-blue-600">إدارة المناطق السكنية</h1>
 
             <div className="flex justify-end">
+                <button
+                    onClick={fetchLocations}
+                    className=" mx-2 bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
+                >
+                    تحديث البيانات
+                </button>
                 <button
                     onClick={() => {
                         setShowForm(true);

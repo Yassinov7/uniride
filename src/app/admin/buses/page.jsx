@@ -1,43 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import { PlusCircle, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLoadingStore } from '@/store/loadingStore';
+import { useAdminPublicStore } from '@/store/adminPublicStore';
+import { supabase } from '@/lib/supabase';
 
 export default function BusesPage() {
-    const [buses, setBuses] = useState([]);
     const { setLoading } = useLoadingStore();
-    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const { buses, fetchBuses } = useAdminPublicStore();
 
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [name, setName] = useState('');
     const [capacity, setCapacity] = useState('');
     const [driverName, setDriverName] = useState('');
-
     const [editingBus, setEditingBus] = useState(null);
 
-    const fetchBuses = async () => {
-        setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('buses')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setBuses(data);
-        } catch (err) {
-            console.error(err);
-            toast.error('حدث خطأ أثناء جلب الباصات');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
     useEffect(() => {
-        fetchBuses();
+        if (buses.length === 0) fetchBuses();
     }, []);
 
     const handleAdd = async () => {
@@ -62,13 +43,11 @@ export default function BusesPage() {
             setDriverName('');
             await fetchBuses();
         } catch (err) {
-            console.error(err);
             toast.error('فشل في الإضافة');
         } finally {
             setLoading(false);
         }
     };
-
 
     const handleDelete = async (id) => {
         setLoading(true);
@@ -84,8 +63,6 @@ export default function BusesPage() {
             setLoading(false);
         }
     };
-
-
 
     const handleUpdate = async () => {
         if (!editingBus.name || !editingBus.capacity) {
@@ -117,10 +94,20 @@ export default function BusesPage() {
         }
     };
 
-
     return (
         <div className="mb-60 space-y-6">
             <h1 className="text-xl font-bold text-blue-600 mb-4">الباصات</h1>
+
+            {/* زر التحديث */}
+            <div className="flex justify-end mb-4">
+                <button
+                    onClick={fetchBuses}
+                    className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
+                >
+                    تحديث البيانات
+                </button>
+            </div>
+
 
             {/* Form */}
             <div className="bg-white p-4 rounded shadow mb-6 space-y-4">

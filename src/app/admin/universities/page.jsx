@@ -1,43 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import toast from 'react-hot-toast';
 import { PlusCircle, X } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
 import { useLoadingStore } from '@/store/loadingStore';
-
+import { useAdminPublicStore } from '@/store/adminPublicStore';
 
 const allDays = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
 export default function UniversitiesPage() {
-    const [universities, setUniversities] = useState([]);
-    const { isLoading, setLoading } = useLoadingStore();
+    const { setLoading } = useLoadingStore();
+    const { universities, fetchUniversities } = useAdminPublicStore();
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-    // add form
+
     const [name, setName] = useState('');
     const [days, setDays] = useState([]);
 
-    // edit modal
     const [editingUniv, setEditingUniv] = useState(null);
     const [editName, setEditName] = useState('');
     const [editDays, setEditDays] = useState([]);
 
-    const fetchUniversities = async () => {
-        setLoading(true); // ⬅️ إضافة
-        const { data, error } = await supabase
-            .from('universities')
-            .select('*')
-            .order('id', { ascending: true });
-
-        if (!error) {
-            setUniversities(data);
-        }
-        setLoading(false); // ⬅️ إنهاء التحميل
-    };
-
-
     useEffect(() => {
-        fetchUniversities();
+        if (universities.length === 0) fetchUniversities();
     }, []);
 
     const handleAdd = async () => {
@@ -45,32 +30,39 @@ export default function UniversitiesPage() {
             toast.error('يرجى إدخال اسم الجامعة واختيار أيام الدوام');
             return;
         }
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('universities').insert({
+                name,
+                working_days: days,
+            });
+            if (error) throw error;
 
-        const { error } = await supabase.from('universities').insert({
-            name,
-            working_days: days,
-        });
-
-        if (error) {
+        }
+        catch (error) {
             toast.error('فشل في الإضافة');
-        } else {
+        } finally {
             toast.success('تمت الإضافة بنجاح');
             setName('');
             setDays([]);
             fetchUniversities();
+            setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        const { error } = await supabase.from('universities').delete().eq('id', id);
-        if (error) {
+        setLoading(true);
+        try{
+            const { error } = await supabase.from('universities').delete().eq('id', id);
+            if (error) throw error;
+        }catch (error) {
             toast.error('فشل في الحذف');
-        } else {
+        } finally {
             toast.success('تم الحذف بنجاح');
             fetchUniversities();
+            setLoading(false);
         }
     };
-
 
     const toggleDay = (day, setter, state) => {
         setter(state.includes(day) ? state.filter((d) => d !== day) : [...state, day]);
@@ -88,24 +80,36 @@ export default function UniversitiesPage() {
             return;
         }
 
-        const { error } = await supabase
+        setLoading(true);
+        try{
+            const { error } = await supabase
             .from('universities')
             .update({ name: editName, working_days: editDays })
             .eq('id', editingUniv.id);
-
-        if (error) {
+            if (error) throw error;
+        }catch (error) {
             toast.error('فشل التحديث');
-        } else {
+        } finally {
             toast.success('تم التحديث بنجاح');
             setEditingUniv(null);
             fetchUniversities();
+            setLoading(false);
         }
     };
 
     return (
         <div className="space-y-6 mb-60">
-            <h1 className="text-xl font-bold text-blue-600 mb-4">الجامعات</h1>
+            <h1 className="text-xl font-bold text-blue-600 mb-2">الجامعات</h1>
 
+            {/* زر تحديث */}
+            <div className="flex justify-end mb-2">
+                <button
+                    onClick={fetchUniversities}
+                    className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm"
+                >
+                    تحديث البيانات
+                </button>
+            </div>
             {/* Form */}
             <div className="bg-white p-4 rounded shadow mb-6 space-y-4">
                 <div>
