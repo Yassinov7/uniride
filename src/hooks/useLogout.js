@@ -12,6 +12,7 @@ const useLogout = () => {
     if (isLoggingOut.current) return;
     isLoggingOut.current = true;
 
+    const toastId = toast.loading('جاري تسجيل الخروج...');
 
     try {
       await supabase.auth.signOut();
@@ -19,8 +20,10 @@ const useLogout = () => {
       localStorage.removeItem('user-store');
 
       router.replace('/login');
+      toast.success('تم تسجيل الخروج بنجاح', { id: toastId });
     } catch (err) {
-      isLoggingOut.current = false; // تسمح بإعادة المحاولة
+      toast.error('فشل تسجيل الخروج، حاول مجددًا', { id: toastId });
+      isLoggingOut.current = false;
     }
   };
 

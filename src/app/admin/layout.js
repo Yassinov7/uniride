@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import useLogout from '@/hooks/useLogout';
@@ -11,7 +10,9 @@ import {
     X, University, Bus, Route, Users, BusFront,
     LayoutDashboard, HomeIcon, BadgeDollarSign, Inbox, LogOut
 } from 'lucide-react';
+import SidebarLink from '@/components/SidebarLink';
 import { useLoadingStore } from '@/store/loadingStore';
+import TransitionLoader from '@/components/TransitionLoader';
 
 const navItems = [
     { name: 'الصفحة الرئيسية', href: '/admin', icon: <LayoutDashboard size={18} /> },
@@ -33,7 +34,13 @@ export default function AdminLayout({ children }) {
     const logout = useLogout();
     const router = useRouter();
     const { user, setUser } = useUserStore();
+    const pathname = usePathname();
+    const [gloading, setGLoading] = useState(false);
 
+    useEffect(() => {
+        // عند تغير الصفحة، أوقف اللودر
+        setGLoading(false);
+    }, [pathname]);
     useEffect(() => {
         const fetchUser = async () => {
             setLoading(true);
@@ -83,6 +90,7 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100" dir="rtl">
+            <TransitionLoader />
             <CommonHeader onMenuClick={() => setOpen(true)} />
 
             <div className=" flex flex-1 min-h-0">
@@ -96,14 +104,14 @@ export default function AdminLayout({ children }) {
                     {/* قائمة التنقل */}
                     <nav className="flex-1 px-4 py-6 space-y-2">
                         {navItems.map((item) => (
-                            <Link
+                            <SidebarLink
                                 key={item.href}
                                 href={item.href}
-                                className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-orange-500 transition-all text-sm font-medium"
-                            >
-                                {item.icon}
-                                <span>{item.name}</span>
-                            </Link>
+                                icon={item.icon}
+                                label={item.name}
+                                closeDrawer={() => setOpen(false)}
+                                setGlobalLoading={setGLoading}
+                            />
                         ))}
                     </nav>
 
@@ -137,15 +145,14 @@ export default function AdminLayout({ children }) {
                         {/* Navigation */}
                         <nav className="flex-1 px-4 py-6 space-y-2">
                             {navItems.map((item) => (
-                                <Link
+                                <SidebarLink
                                     key={item.href}
                                     href={item.href}
-                                    onClick={() => setOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-orange-500 transition-all text-sm font-medium"
-                                >
-                                    {item.icon}
-                                    <span>{item.name}</span>
-                                </Link>
+                                    icon={item.icon}
+                                    label={item.name}
+                                    closeDrawer={() => setOpen(false)}
+                                    setGlobalLoading={setGLoading}
+                                />
                             ))}
                         </nav>
 
