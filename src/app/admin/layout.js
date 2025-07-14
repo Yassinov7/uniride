@@ -85,55 +85,63 @@ export default function AdminLayout({ children }) {
         <div className="flex flex-col min-h-screen bg-gray-100" dir="rtl">
             <CommonHeader onMenuClick={() => setOpen(true)} />
 
-            <div className="flex flex-1">
+            <div className="flex flex-1 min-h-0">
                 {/* Sidebar - Desktop */}
-                <aside className="hidden md:flex flex-col w-64 bg-blue-600 text-white shadow-lg">
-                    <div className="p-6 text-xl font-bold border-b border-blue-500">لوحة التحكم</div>
-                    <nav className="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
+                <aside className="hidden md:flex flex-col w-64 h-full bg-blue-600 text-white shadow-lg overflow-y-auto">
+                    {/* العنوان */}
+                    <div className="p-6 text-xl font-bold border-b border-blue-500">
+                        لوحة تحكم المسؤول
+                    </div>
+
+                    {/* قائمة التنقل */}
+                    <nav className="flex-1 px-4 py-6 space-y-2">
                         {navItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-500 transition text-sm"
+                                className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-orange-500 transition-all text-sm font-medium"
                             >
                                 {item.icon}
                                 <span>{item.name}</span>
                             </Link>
                         ))}
                     </nav>
+
+                    {/* زر تسجيل الخروج */}
                     <button
                         onClick={logout}
-                        className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
+                        className="m-4 mt-auto bg-orange-600 hover:bg-orange-700 transition-all rounded-lg py-2 w-auto flex justify-center items-center gap-2 text-sm font-semibold"
                     >
-                        <LogOut size={18} /> تسجيل خروج
+                        <LogOut size={18} />
+                        تسجيل الخروج
                     </button>
                 </aside>
 
-                {/* Mobile Drawer - Left with transition */}
+                {/* Mobile Drawer */}
                 <div
-                    className={`fixed inset-0 z-40 transition-opacity duration-300 ${open ? 'bg-black/30 backdrop-blur-sm' : 'pointer-events-none opacity-0'
-                        }`}
+                    className={`fixed inset-0 z-40 transition-opacity duration-300 ${open ? 'bg-black/30 backdrop-blur-sm' : 'pointer-events-none opacity-0'}`}
                     onClick={() => setOpen(false)}
                 >
                     <aside
-                        className={`fixed top-0 left-0 w-72 h-full bg-blue-600 text-white shadow-md z-50 transform transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'
-                            }`}
+                        className={`fixed top-0 left-0 w-72 h-full bg-blue-600 text-white shadow-xl transform transition-transform duration-300 z-50 overflow-y-auto ${open ? 'translate-x-0' : '-translate-x-full'}`}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-center p-4 border-b border-blue-400">
-                            <h2 className="font-bold text-xl">القائمة</h2>
+                        {/* Header */}
+                        <div className="flex justify-between items-center p-4 border-b border-blue-500">
+                            <h2 className="font-bold text-xl">لوحة تحكم المسؤول</h2>
                             <button onClick={() => setOpen(false)}>
                                 <X size={24} />
                             </button>
                         </div>
 
-                        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                        {/* Navigation */}
+                        <nav className="flex-1 px-4 py-6 space-y-2">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setOpen(false)}
-                                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-500 transition text-sm"
+                                    className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-orange-500 transition-all text-sm font-medium"
                                 >
                                     {item.icon}
                                     <span>{item.name}</span>
@@ -141,23 +149,26 @@ export default function AdminLayout({ children }) {
                             ))}
                         </nav>
 
+                        {/* Logout button */}
                         <button
                             onClick={() => {
                                 setOpen(false);
                                 logout();
                             }}
-                            className="flex items-center justify-center gap-2 bg-blue-700 py-3 hover:bg-orange-500 transition text-white"
+                            className="m-4 bg-orange-600 hover:bg-orange-700 transition-all rounded-lg py-2 w-auto flex justify-center items-center gap-2 text-sm font-semibold"
                         >
-                            <LogOut size={18} /> تسجيل خروج
+                            <LogOut size={18} />
+                            تسجيل الخروج
                         </button>
                     </aside>
                 </div>
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 sm:p-6">
+                <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
                     {children}
                 </main>
             </div>
         </div>
+
     );
 }
