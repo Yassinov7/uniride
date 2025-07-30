@@ -36,7 +36,7 @@ export default function RidesManagement() {
 
     useEffect(() => {
         fetchRides();
-    }, [fetchRides]);
+    }, []);
     const filteredRides = rides.filter(
         (ride) => ride.date === date && ride.route_type === routeType
     );
