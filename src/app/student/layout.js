@@ -71,6 +71,12 @@ export default function StudentLayout({ children }) {
 
             // ✅ تحقق من الدور
             if (profile.role !== 'student') {
+                if (profile.role === 'admin') {
+
+                    router.replace('/admin');
+                    setLoading(false);
+                    return;
+                }
                 router.replace('/unauthorized');
                 setLoading(false);
                 return;

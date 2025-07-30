@@ -21,7 +21,7 @@ export default function Login() {
         if (error) {
             toast.error(error.message);
         } else {
-            router.replace('/auth-redirect');
+            router.replace('/student');
         }
 
         setLoading(false);
