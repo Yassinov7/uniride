@@ -328,11 +328,11 @@ export default function RideRequestPage() {
                                                 </button>
                                             </span>
                                         ) : group.status === 'rejected' ? (
-                                            <span className="text-red-500 font-semibold">❌ مرفوض</span>
+                                            <span className="text-red-600 font-semibold">مرفوض</span>
                                         ) : group.status === 'assigned' ? (
-                                            <span className="text-gray-500 font-semibold">تم الحجز كاملا</span>
+                                            <span className="text-green-500 font-semibold">تم الحجز كاملا</span>
                                         ) : (
-                                            <span className="text-red-600">
+                                            <span className="text-red-300">
                                                 <X size={14} className="inline" /> بالانتظار
                                             </span>
                                         )}
