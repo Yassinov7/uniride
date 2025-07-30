@@ -211,9 +211,19 @@ export default function AdminRequestsPage() {
                 <td className="px-4 py-2 hidden sm:table-cell">{g.location}</td>
                 <td className="px-4 py-2 text-xs">{g.dates.join(', ')}</td>
                 <td className="px-4 py-2 font-semibold">
-                  {g.status === 'approved'
-                    ? <span className="text-green-600"><Check size={14} className="inline" /> مقبول</span>
-                    : <span className="text-red-600"><X size={14} className="inline" /> مرفوض</span>}
+                  {g.status === 'approved' ? (
+                    <span className="text-green-600">
+                      <Check size={14} className="inline" /> مقبول
+                    </span>
+                  ) : g.status === 'assigned' ? (
+                    <span className="text-blue-600">
+                      <UserCheck size={14} className="inline" /> تم بنجاح
+                    </span>
+                  ) : (
+                    <span className="text-red-600">
+                      <X size={14} className="inline" /> مرفوض
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

@@ -10,12 +10,12 @@ export const useLoadingStore = create((set) => {
       if (val) {
         if (timeoutId) clearTimeout(timeoutId);
 
-        // تايمر تلقائي بعد 10 ثواني
+        // تايمر تلقائي بعد 30 ثواني
         timeoutId = setTimeout(() => {
           set({ isLoading: false });
           timeoutId = null;
           toast.error('انتهى الوقت المخصص للتحميل. تأكد من الاتصال.');
-        }, 20000);
+        }, 30000);
       } else {
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = null;
