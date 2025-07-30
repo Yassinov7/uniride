@@ -16,6 +16,31 @@ export default function StudentWalletPage() {
         fetchBalance();
     }, []);
 
+    // const fetchBalance = async () => {
+    //     setRefreshing(true);
+
+    //     const userId = user?.id;
+    //     if (!userId) {
+    //         setRefreshing(false);
+    //         return;
+    //     }
+
+    //     const { data: existing, error } = await supabase
+    //         .from('wallets')
+    //         .select('balance')
+    //         .eq('student_id', userId)
+    //         .maybeSingle();
+
+    //     if (!existing) {
+    //         await supabase.from('wallets').insert({ student_id: userId, balance: 0 });
+    //         setBalance(0);
+    //     } else {
+    //         setBalance(existing.balance ?? 0);
+    //     }
+
+    //     setLoaded(true);
+    //     setRefreshing(false);
+    // };
     const fetchBalance = async () => {
         setRefreshing(true);
 
@@ -31,11 +56,11 @@ export default function StudentWalletPage() {
             .eq('student_id', userId)
             .maybeSingle();
 
-        if (!existing) {
-            await supabase.from('wallets').insert({ student_id: userId, balance: 0 });
-            setBalance(0);
-        } else {
+        if (existing) {
             setBalance(existing.balance ?? 0);
+        } else {
+            // المحفظة غير موجودة، نعرض الرصيد 0 أو رسالة تنبيه
+            setBalance(0);
         }
 
         setLoaded(true);

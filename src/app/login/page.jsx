@@ -26,8 +26,49 @@ export default function Login() {
 
     //     setLoading(false);
     // };
+    // const handleLogin = async () => {
+    //     setLoading(true);
+    //     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    //     if (error) {
+    //         toast.error(error.message);
+    //         setLoading(false);
+    //         return;
+    //     }
+
+    //     const userId = data?.user?.id;
+    //     if (!userId) {
+    //         toast.error('تعذر الحصول على معلومات الحساب.');
+    //         setLoading(false);
+    //         return;
+    //     }
+
+    //     const { data: profile, error: profileError } = await supabase
+    //         .from('profiles')
+    //         .select('role')
+    //         .eq('id', userId)
+    //         .single();
+
+    //     if (profileError || !profile) {
+    //         toast.error('حدث خطأ أثناء تحميل البيانات.');
+    //         setLoading(false);
+    //         return;
+    //     }
+
+    //     // ✅ التوجيه بناءً على الدور
+    //     if (profile.role === 'admin') {
+    //         router.replace('/admin');
+    //     } else if (profile.role === 'student') {
+    //         router.replace('/student');
+    //     } else {
+    //         router.replace('/unauthorized');
+    //     }
+
+    //     setLoading(false);
+    // };
     const handleLogin = async () => {
         setLoading(true);
+
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
@@ -43,6 +84,7 @@ export default function Login() {
             return;
         }
 
+        // جلب الدور
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
@@ -55,11 +97,29 @@ export default function Login() {
             return;
         }
 
-        // ✅ التوجيه بناءً على الدور
-        if (profile.role === 'admin') {
-            router.replace('/admin');
-        } else if (profile.role === 'student') {
+        // ✅ إذا كان الطالب، نتحقق من وجود المحفظة
+        if (profile.role === 'student') {
+            const { data: wallet, error: walletError } = await supabase
+                .from('wallets')
+                .select('id')
+                .eq('student_id', userId)
+                .maybeSingle();
+
+            if (!wallet && !walletError) {
+                const { error: insertError } = await supabase
+                    .from('wallets')
+                    .insert({ student_id: userId, balance: 0 });
+
+                if (insertError) {
+                    toast.error('حدث خطأ أثناء إنشاء المحفظة.');
+                    setLoading(false);
+                    return;
+                }
+            }
+
             router.replace('/student');
+        } else if (profile.role === 'admin') {
+            router.replace('/admin');
         } else {
             router.replace('/unauthorized');
         }
