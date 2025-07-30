@@ -2,13 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
 import { BusFront } from 'lucide-react';
 
 export default function AuthRedirect() {
     const router = useRouter();
-    const { user, setUser } = useUserStore();
 
     useEffect(() => {
         const checkAndRedirect = async () => {
@@ -21,42 +19,28 @@ export default function AuthRedirect() {
                 return;
             }
 
-            let { data: profile } = await supabase
+            const { data: profile } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('role')
                 .eq('id', userId)
                 .single();
 
             if (!profile) {
-
-
-                if (insertError) {
-                    console.error('لا يوجد ملف شخصي لك: ', insertError);
-                    router.replace('/login');
-                    return;
-                }
+                router.replace('/login');
+                return;
             }
-
-            setUser(profile);
-
 
             if (profile.role === 'admin') {
                 router.replace('/admin');
-            } else {
+            } else if (profile.role === 'student') {
                 router.replace('/student');
+            } else {
+                router.replace('/unauthorized');
             }
-
         };
 
-        if (!user) {
-            const timeout = setTimeout(() => {
-                checkAndRedirect();
-            }, 100); // تأخير بدء العملية بـ 1 ثانية
-
-            return () => clearTimeout(timeout);
-        }
-    }, [user]);
-
+        checkAndRedirect();
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 text-center p-6">
