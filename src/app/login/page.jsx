@@ -14,14 +14,54 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // const handleLogin = async () => {
+    //     setLoading(true);
+    //     const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    //     if (error) {
+    //         toast.error(error.message);
+    //     } else {
+    //         router.replace('/student');
+    //     }
+
+    //     setLoading(false);
+    // };
     const handleLogin = async () => {
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
             toast.error(error.message);
-        } else {
+            setLoading(false);
+            return;
+        }
+
+        const userId = data?.user?.id;
+        if (!userId) {
+            toast.error('تعذر الحصول على معلومات الحساب.');
+            setLoading(false);
+            return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+        if (profileError || !profile) {
+            toast.error('حدث خطأ أثناء تحميل البيانات.');
+            setLoading(false);
+            return;
+        }
+
+        // ✅ التوجيه بناءً على الدور
+        if (profile.role === 'admin') {
+            router.replace('/admin');
+        } else if (profile.role === 'student') {
             router.replace('/student');
+        } else {
+            router.replace('/unauthorized');
         }
 
         setLoading(false);

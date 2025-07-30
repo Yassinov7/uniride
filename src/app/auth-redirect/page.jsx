@@ -48,14 +48,14 @@ export default function AuthRedirect() {
 
         };
 
-        // if (!user) {
-        //     const timeout = setTimeout(() => {
-        //         checkAndRedirect();
-        //     }, 100); // تأخير بدء العملية بـ 1 ثانية
+        if (!user) {
+            const timeout = setTimeout(() => {
+                checkAndRedirect();
+            }, 100); // تأخير بدء العملية بـ 1 ثانية
 
-        //     return () => clearTimeout(timeout);
-        // }
-    }, []);
+            return () => clearTimeout(timeout);
+        }
+    }, [user]);
 
 
     return (
