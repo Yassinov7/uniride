@@ -86,7 +86,7 @@ export default function StudentLayout({ children }) {
         };
 
         fetchUser();
-    }, []);
+    }, [router, setLoading, setUser, user]);
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100" dir="rtl">
