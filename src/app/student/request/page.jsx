@@ -123,9 +123,50 @@ export default function RideRequestPage() {
         setTimingGroup(null);
     };
 
+    // const handleSubmit = async () => {
+    //     if (!startDate || selectedDays.length === 0) {
+    //         toast.error('يرجى تحديد تاريخ وأيام الأسبوع');
+    //         return;
+    //     }
+
+    //     setSubmitting(true);
+    //     const studentId = user?.id;
+
+    //     if (!studentId) {
+    //         toast.error('فشل جلب معلومات الحساب');
+    //         setSubmitting(false);
+    //         return;
+    //     }
+
+    //     const start = getStartFriday(startDate);
+    //     const dates = selectedDays.map((i) => start.add(i, 'day').format('YYYY-MM-DD'));
+    //     const group_id = crypto.randomUUID();
+
+    //     const inserts = dates.map((date) => ({ student_id: studentId, date, group_id }));
+    //     const { error } = await supabase.from('ride_requests').insert(inserts);
+
+    //     setSubmitting(false);
+
+    //     if (error) toast.error('حدث خطأ أثناء الحجز');
+    //     else {
+    //         toast.success('تم إرسال الطلب بنجاح');
+    //         setSelectedDays([]);
+    //         setStartDate('');
+    //         fetchRequests();
+    //     }
+    // };
     const handleSubmit = async () => {
         if (!startDate || selectedDays.length === 0) {
             toast.error('يرجى تحديد تاريخ وأيام الأسبوع');
+            return;
+        }
+
+        // ✅ تحقق من أن التاريخ المحدد لا يسبق الغد
+        const selectedDate = dayjs(startDate);
+        const tomorrow = dayjs().add(1, 'day').startOf('day');
+
+        if (selectedDate.isBefore(tomorrow)) {
+            toast.error('لا يمكن الحجز بتاريخ قبل الغد');
             return;
         }
 
@@ -155,6 +196,7 @@ export default function RideRequestPage() {
             fetchRequests();
         }
     };
+
 
     return (
         <div className="max-w-xl mb-60 mx-auto space-y-6">
@@ -195,9 +237,11 @@ export default function RideRequestPage() {
                 <input
                     type="date"
                     value={startDate}
+                    min={dayjs().add(1, 'day').format('YYYY-MM-DD')} // هذا يمنع التواريخ قبل الغد
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
 
                 {startDate && (
                     <>
