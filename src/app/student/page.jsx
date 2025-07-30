@@ -19,7 +19,7 @@ dayjs.locale('ar');
 const navLinks = [
     { name: 'الحجز', href: '/student/request', icon: <Bus size={22} /> },
     { name: 'رحلاتي', href: '/student/next', icon: <FileUp size={22} /> },
-    { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={22} /> },
+    // { name: 'رحلة العودة', href: '/student/return', icon: <FileDown size={22} /> },
     { name: 'سجل الرحلات', href: '/student/history', icon: <ReceiptTextIcon size={22} /> },
     { name: 'رصيدي', href: '/student/wallet', icon: <BadgeDollarSign size={22} /> },
     { name: 'فواتيري', href: '/student/wallet/history', icon: <Inbox size={22} /> },
