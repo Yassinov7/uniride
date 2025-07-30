@@ -85,7 +85,7 @@ export default function AdminLayout({ children }) {
         };
 
         fetchUser();
-    }, []);
+    }, [router, setLoading, setUser, user]);
 
 
     return (
