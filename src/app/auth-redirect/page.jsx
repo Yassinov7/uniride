@@ -28,19 +28,13 @@ export default function AuthRedirect() {
                 .single();
 
             if (!profile) {
-                const { data: newProfile, error: insertError } = await supabase
-                    .from('profiles')
-                    .insert({ id: userId, role: 'student' })
-                    .select()
-                    .single();
+                
 
                 if (insertError) {
-                    console.error('فشل في إنشاء الملف الشخصي:', insertError);
+                    console.error('لا يوجد ملف شخصي لك: ', insertError);
                     router.replace('/login');
                     return;
                 }
-
-                profile = newProfile;
             }
 
             setUser(profile);
