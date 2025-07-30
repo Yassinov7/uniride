@@ -68,7 +68,7 @@ export default function AdminLayout({ children }) {
 
             // ❌ إذا لم يوجد، لا تنشئه
             if (!profile || error) {
-                router.replace('/loging');
+                router.replace('/login');
                 setLoading(false);
                 return;
             }

@@ -6,8 +6,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
-import { BookAlert, DollarSign, Clock4, RotateCcw } from 'lucide-react';
+import { BookAlert, DollarSign, Clock4, RotateCcw, Calendar, ChevronRight, CheckCircle } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useRideRequestStore } from '@/store/rideRequestStore';
 
@@ -230,22 +229,28 @@ export default function RideRequestPage() {
             </div>
 
             {/* النموذج */}
-            <div className="bg-white p-4 rounded-xl shadow space-y-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    📅 اختر تاريخًا ضمن الأسبوع (من الجمعة إلى الخميس)
+
+            <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 space-y-5">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-1">
+                    <Calendar size={18} className="text-blue-600" />
+                    اختر تاريخًا ضمن الأسبوع (من الجمعة إلى الخميس)
                 </label>
+
                 <input
                     type="date"
                     value={startDate}
-                    min={dayjs().add(1, 'day').format('YYYY-MM-DD')} // هذا يمنع التواريخ قبل الغد
+                    min={dayjs().add(1, 'day').format('YYYY-MM-DD')}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
-
 
                 {startDate && (
                     <>
-                        <p className="font-medium text-sm mt-2 text-gray-700">📌 اختر الأيام المطلوبة:</p>
+                        <p className="flex items-center gap-1 font-medium text-sm text-gray-700 mt-4">
+                            <ChevronRight size={16} className="text-blue-500" />
+                            اختر الأيام المطلوبة:
+                        </p>
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
                             {weekdays.map((name, i) => {
                                 const base = getStartFriday(startDate);
@@ -256,13 +261,17 @@ export default function RideRequestPage() {
                                         key={i}
                                         type="button"
                                         onClick={() => handleToggleDay(i)}
-                                        className={`border rounded-lg p-3 text-sm text-center transition duration-200 ${selected
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-300'
-                                            }`}
+                                        className={`group border rounded-xl p-3 text-sm text-center transition-all duration-200 shadow-sm
+                ${selected
+                                                ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-orange-300'}
+              `}
                                     >
-                                        <div className="font-bold">{name}</div>
-                                        <div className="text-xs mt-1">{date.format('YYYY-MM-DD')}</div>
+                                        <div className="font-bold flex items-center justify-center gap-1">
+                                            {selected && <CheckCircle size={14} className="text-white" />}
+                                            {name}
+                                        </div>
+                                        <div className=" text-red-600 text-xs mt-1">{date.format('YYYY-MM-DD')}</div>
                                     </button>
                                 );
                             })}
@@ -273,11 +282,12 @@ export default function RideRequestPage() {
                 <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition duration-200"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm"
                 >
                     {submitting ? '⏳ جاري الإرسال...' : '🚀 إرسال الطلب'}
                 </button>
             </div>
+
 
 
             {/* عرض الطلبات */}
