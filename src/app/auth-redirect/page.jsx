@@ -28,7 +28,7 @@ export default function AuthRedirect() {
                 .single();
 
             if (!profile) {
-                
+
 
                 if (insertError) {
                     console.error('لا يوجد ملف شخصي لك: ', insertError);
@@ -39,22 +39,22 @@ export default function AuthRedirect() {
 
             setUser(profile);
 
-            setTimeout(() => {
-                if (profile.role === 'admin') {
-                    router.replace('/admin');
-                } else {
-                    router.replace('/student');
-                }
-            }, 100);
+
+            if (profile.role === 'admin') {
+                router.replace('/admin');
+            } else {
+                router.replace('/student');
+            }
+
         };
 
-        if (!user) {
-            const timeout = setTimeout(() => {
-                checkAndRedirect();
-            }, 100); // تأخير بدء العملية بـ 1 ثانية
+        // if (!user) {
+        //     const timeout = setTimeout(() => {
+        //         checkAndRedirect();
+        //     }, 100); // تأخير بدء العملية بـ 1 ثانية
 
-            return () => clearTimeout(timeout);
-        }
+        //     return () => clearTimeout(timeout);
+        // }
     }, []);
 
 
