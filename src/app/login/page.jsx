@@ -66,9 +66,9 @@ export default function Login() {
                 </button>
 
                 <div className="flex justify-between text-sm">
-                    <Link href="/register" className="text-orange-500 hover:underline">
+                    {/* <Link href="/register" className="text-orange-500 hover:underline">
                         إنشاء حساب جديد
-                    </Link>
+                    </Link> */}
                     <Link href="/" className="text-gray-500 hover:underline">
                         العودة للرئيسية
                     </Link>

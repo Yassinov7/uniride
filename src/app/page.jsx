@@ -25,12 +25,12 @@ export default function Home() {
               تسجيل دخول
             </button>
           </Link>
-          <Link href="/register">
+          {/* <Link href="/register">
             <button className="flex items-center gap-2 px-5 py-2 bg-orange-500 text-white rounded-lg shadow hover:bg-orange-600 transition text-base">
               <UserCheck size={24} />
               إنشاء حساب
             </button>
-          </Link>
+          </Link> */}
         </div>
 
         {/* بطاقة التواصل */}
