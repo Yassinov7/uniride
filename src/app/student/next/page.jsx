@@ -29,7 +29,7 @@ export default function NextBookingPage() {
     useEffect(() => {
         if (!user?.id || loaded) return;
         fetchBooking();
-    }, [user]);
+    }, []);
 
     const fetchBooking = async () => {
         setLoading(true);
