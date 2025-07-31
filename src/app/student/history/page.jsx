@@ -74,7 +74,7 @@ export default function StudentRidesPage() {
                         <tbody>
                             {rides.map((ride, idx) => {
                                 const now = dayjs();
-                                const rideDateTime = ride.datetime;
+                                const rideDateTime = dayjs(ride.datetime);
                                 const status = rideDateTime.isAfter(now) ? 'قادمة' : 'منتهية';
 
                                 return (
