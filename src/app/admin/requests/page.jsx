@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import { useLoadingStore } from '@/store/loadingStore';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 dayjs.locale('ar');
 
@@ -14,6 +15,30 @@ export default function AdminRequestsPage() {
   const [filters, setFilters] = useState({ university: '', location: '', gender: '' });
   const { setLoading } = useLoadingStore();
 
+  const exportProcessedToExcel = () => {
+    if (processed.length === 0) {
+      toast.error('لا يوجد طلبات معالجة للتصدير');
+      return;
+    }
+
+    const rows = processed.map((g) => ({
+      'الاسم': g.student_name,
+      'الجنس': g.gender === 'male' ? 'ذكر' : 'أنثى',
+      'الجامعة': g.university,
+      'المنطقة': g.location,
+      'التواريخ': g.dates.join(', '),
+      'الحالة':
+        g.status === 'approved' ? 'مقبول' :
+          g.status === 'assigned' ? 'تم بنجاح' :
+            'مرفوض',
+      'تاريخ الإنشاء': dayjs(g.created_at).format('YYYY-MM-DD HH:mm'),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'الطلبات المعالجة');
+    XLSX.writeFile(workbook, 'الطلبات_المعالجة.xlsx');
+  };
 
   useEffect(() => {
     fetchRequests();
@@ -191,6 +216,14 @@ export default function AdminRequestsPage() {
       {/* الطلبات المعالجة */}
       <div className="border rounded shadow overflow-x-auto">
         <h2 className="bg-orange-100 text-orange-800 px-4 py-2 font-semibold">الطلبات المعالجة</h2>
+        <div className="p-2 flex justify-end">
+          <button
+            onClick={exportProcessedToExcel}
+            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+          >
+            📥 تصدير إلى Excel
+          </button>
+        </div>
         <table className="min-w-full text-sm text-right">
           <thead className="bg-orange-50">
             <tr>

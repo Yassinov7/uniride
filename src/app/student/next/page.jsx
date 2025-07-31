@@ -1,17 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
-import { Calendar, Clock, BusFront, CheckCircle, ArrowRight } from 'lucide-react';
-import { useLoadingStore } from '@/store/loadingStore';
+import { Calendar, Clock, BusFront, CheckCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useNextBookingStore } from '@/store/useNextBookingStore';
 
 export default function NextBookingPage() {
-    const { setLoading } = useLoadingStore();
+    const [refreshing, setRefreshing] = useState(false);
     const { user } = useUserStore();
     const {
         booking,
@@ -29,10 +28,11 @@ export default function NextBookingPage() {
     useEffect(() => {
         if (!user?.id || loaded) return;
         fetchBooking();
-    }, []);
+    }, [user?.id, loaded]);
+
 
     const fetchBooking = async () => {
-        setLoading(true);
+        setRefreshing(true);
         try {
             const studentId = user.id;
 
@@ -70,7 +70,7 @@ export default function NextBookingPage() {
             setLoaded(true); // 🧠 إشارة بعدم الجلب مرة أخرى
             checkIfAlreadyConfirmed(studentId);
         } finally {
-            setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -128,7 +128,40 @@ export default function NextBookingPage() {
 
     return (
         <div className="max-w-3xl mx-auto mb-60 mt-10 bg-white shadow rounded-lg p-6 space-y-6" dir="rtl">
-            <h1 className="text-xl font-bold text-blue-600 text-center">الحجز القادم</h1>
+            <div className="flex justify-between">
+                <h1 className="text-xl font-bold text-blue-600 text-center">الحجز القادم</h1>
+                <button
+                    onClick={async () => {
+                        setRefreshing(true);
+
+                        // 🧼 إفراغ القيم القديمة
+                        setBooking(null);
+                        setAllBookings([]);
+                        setConfirmed(false);
+                        setLoaded(false); // 🧠 يسمح بإعادة الجلب
+
+                        const toastId = toast.loading('جاري تحديث البيانات...');
+
+                        try {
+                            await fetchBooking();
+                            toast.success('تم تحديث البيانات بنجاح');
+                        } catch {
+                            toast.error('حدث خطأ أثناء التحديث');
+                        } finally {
+                            toast.dismiss(toastId);
+                            setRefreshing(false);
+                        }
+                    }}
+                    disabled={refreshing}
+                    className={`text-sm flex items-center gap-1 px-3 py-1 rounded ${refreshing
+                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        }`}
+                >
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'جاري التحديث...' : 'تحديث'}
+                </button>
+            </div>
 
             {booking ? (
                 <div className="space-y-3 text-center">

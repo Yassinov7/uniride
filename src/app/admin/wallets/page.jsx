@@ -7,7 +7,7 @@ import { Pencil, X } from 'lucide-react';
 import { useLoadingStore } from '@/store/loadingStore';
 import { useAdminWalletStore } from '@/store/adminWalletStore';
 import { useUserStore } from '@/store/userStore';
-
+import * as XLSX from 'xlsx';
 
 export default function AdminWalletsPage() {
     const { students, fetchStudents } = useAdminWalletStore();
@@ -18,6 +18,22 @@ export default function AdminWalletsPage() {
     const { user } = useUserStore();
     const [searchQuery, setSearchQuery] = useState('');
 
+    const exportToExcel = () => {
+        if (!students || students.length === 0) {
+            toast.error('لا توجد بيانات للتصدير');
+            return;
+        }
+
+        const rows = students.map((student) => ({
+            'الاسم': student.full_name,
+            'الرصيد (ل.س)': student.balance,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'أرصدة الطلاب');
+        XLSX.writeFile(workbook, 'أرصدة_الطلاب.xlsx');
+    };
 
     useEffect(() => {
         if (students.length === 0) fetchStudents();
@@ -90,9 +106,14 @@ export default function AdminWalletsPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-xl font-bold text-blue-700">إدارة أرصدة الطلاب</h1>
 
-
-
+                <button
+                    onClick={exportToExcel}
+                    className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition"
+                >
+                    📥 تصدير إلى Excel
+                </button>
             </div>
+
             <div dir='ltr' className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <button
                     onClick={async () => {

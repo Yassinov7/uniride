@@ -10,7 +10,7 @@ import { useStudentRidesHistoryStore } from '@/store/useStudentRidesHistory';
 dayjs.locale('ar');
 
 export default function StudentRidesPage() {
-
+    const [refreshing, setRefreshing] = useState(false);
     const { setLoading } = useLoadingStore();
     const { user } = useUserStore();
     const { rides, setRides } = useStudentRidesHistoryStore();
@@ -18,6 +18,40 @@ export default function StudentRidesPage() {
         if (rides.length > 0) return;
         fetchRides();
     }, []);
+    const handleRefresh = async () => {
+        if (!user?.id) return;
+
+        setRefreshing(true);
+
+        try {
+            setRides([]); // إفراغ البيانات الحالية قبل التحديث
+
+            const { data } = await supabase
+                .from('ride_students')
+                .select(`
+                ride:ride_id (
+                    date,
+                    time,
+                    route_type,
+                    buses(name)
+                )
+            `)
+                .eq('student_id', user.id);
+
+            if (!data) return;
+
+            const sorted = data
+                .map((r) => ({
+                    ...r.ride,
+                    datetime: dayjs(`${r.ride.date} ${r.ride.time}`),
+                }))
+                .sort((a, b) => b.datetime - a.datetime);
+
+            setRides(sorted);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const fetchRides = async () => {
         if (!user || !user.id) return; // تأكيد إضافي
@@ -53,9 +87,23 @@ export default function StudentRidesPage() {
 
     return (
         <div className="max-w-4xl mx-auto p-4 mb-60 space-y-6 text-right" dir="rtl">
-            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-                <RefreshCw size={20} /> سجل رحلاتي
-            </h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+                    <RefreshCw size={20} /> سجل رحلاتي
+                </h1>
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className={`text-sm flex items-center gap-1 px-3 py-1 rounded ${refreshing
+                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        }`}
+                >
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'جاري التحديث...' : 'تحديث'}
+                </button>
+            </div>
+
 
             {rides.length === 0 ? (
                 <p className="text-center text-gray-600 mt-6">لا يوجد رحلات حتى الآن.</p>
@@ -66,7 +114,7 @@ export default function StudentRidesPage() {
                             <tr>
                                 <th className="p-2">التاريخ</th>
                                 <th className="p-2 hidden sm:table-cell">الساعة</th>
-                                <th className="p-2 hidden sm:table-cell">نوع الرحلة</th>
+                                <th className="p-2">نوع الرحلة</th>
                                 <th className="p-2">الباص</th>
                                 <th className="p-2">الحالة</th>
                             </tr>
@@ -83,7 +131,7 @@ export default function StudentRidesPage() {
                                             {dayjs(ride.date).format('dddd - YYYY/MM/DD')}
                                         </td>
                                         <td className="p-2 hidden sm:table-cell">{ride.time}</td>
-                                        <td className="p-2 hidden sm:table-cell">
+                                        <td className="p-2">
                                             {ride.route_type === 'go' ? 'ذهاب' : 'عودة'}
                                         </td>
                                         <td className="p-2">{ride.buses?.name || '—'}</td>
