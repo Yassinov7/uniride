@@ -128,6 +128,41 @@ export default function AdminWalletsPage() {
                     </select>
                 </div>
             </div>
+            {/* الملخص المالي */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 text-sm">
+                {/* مجموع الرصيد السالب */}
+                <div className="bg-red-50 text-red-700 p-4 rounded shadow-sm text-center">
+                    <div className="font-bold text-lg">
+                        {students
+                            .filter((s) => s.balance < 0)
+                            .reduce((sum, s) => sum + s.balance, 0)
+                            .toLocaleString()} ل.س
+                    </div>
+                    <div>إجمالي الأرصدة السالبة</div>
+                </div>
+
+                {/* مجموع الرصيد الموجب */}
+                <div className="bg-green-50 text-green-700 p-4 rounded shadow-sm text-center">
+                    <div className="font-bold text-lg">
+                        {students
+                            .filter((s) => s.balance >= 0)
+                            .reduce((sum, s) => sum + s.balance, 0)
+                            .toLocaleString()} ل.س
+                    </div>
+                    <div>إجمالي الأرصدة الموجبة</div>
+                </div>
+
+                {/* صافي الرصيد */}
+                <div className="bg-blue-50 text-blue-700 p-4 rounded shadow-sm text-center">
+                    <div className="font-bold text-lg">
+                        {students
+                            .reduce((sum, s) => sum + s.balance, 0)
+                            .toLocaleString()} ل.س
+                    </div>
+                    <div>صافي الرصيد الكلي</div>
+                </div>
+            </div>
+
             <div className="overflow-x-auto rounded-lg border shadow-sm">
                 <table className="min-w-full text-sm text-center bg-white">
                     <thead className="bg-blue-50 text-blue-800 text-sm">
@@ -148,27 +183,27 @@ export default function AdminWalletsPage() {
                                         true
                             )
                             .map((student) => (
-                            <tr key={student.id} className="hover:bg-gray-50">
-                                <td className="border px-4 py-2 font-bold text-blue-700">{student.full_name}</td>
-                                <td
-                                    className={`border px-4 py-2 font-semibold ${student.balance < 0 ? 'text-red-600' : 'text-green-600'
-                                        }`}
-                                >
-                                    {student.balance}
-                                </td>
-                                <td className="border px-4 py-2">
-                                    <button
-                                        onClick={() => {
-                                            setEditingStudent(student);
-                                            setForm({ amount: '', description: '', saving: false });
-                                        }}
-                                        className="bg-orange-500 text-white px-4 py-1.5 rounded hover:bg-orange-600 text-sm flex items-center justify-center gap-1"
+                                <tr key={student.id} className="hover:bg-gray-50">
+                                    <td className="border px-4 py-2 font-bold text-blue-700">{student.full_name}</td>
+                                    <td
+                                        className={`border px-4 py-2 font-semibold ${student.balance < 0 ? 'text-red-600' : 'text-green-600'
+                                            }`}
                                     >
-                                        <Pencil size={16} />
-                                        تعديل
-                                    </button>
-                                </td>
-                            </tr>
+                                        {student.balance}
+                                    </td>
+                                    <td className="border px-4 py-2">
+                                        <button
+                                            onClick={() => {
+                                                setEditingStudent(student);
+                                                setForm({ amount: '', description: '', saving: false });
+                                            }}
+                                            className="bg-orange-500 text-white px-4 py-1.5 rounded hover:bg-orange-600 text-sm flex items-center justify-center gap-1"
+                                        >
+                                            <Pencil size={16} />
+                                            تعديل
+                                        </button>
+                                    </td>
+                                </tr>
                             ))}
                     </tbody>
                 </table>
