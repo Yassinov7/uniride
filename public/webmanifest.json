@@ -2,11 +2,21 @@
   "name": "UniRide",
   "short_name": "UniRide",
   "description": "نظام ذكي لتنظيم نقل الطلاب بين الجامعة والسكن",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/auth-redirect",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait",
+  "theme_color": "#2563eb",
+  "background_color": "#eff6ff",
   "icons": [
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/android-chrome-192x192.png",
@@ -14,11 +24,5 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#2563eb",
-  "background_color": "#eff6ff",
-  "display": "standalone",
-  "start_url": "/auth-redirect",
-  "orientation": "portrait",
-  "lang": "ar",
-  "dir": "rtl"
+  "prefer_related_applications": false
 }
