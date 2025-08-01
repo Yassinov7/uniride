@@ -181,8 +181,7 @@ export default function RideRequestPage() {
 
         const start = getStartFriday(startDate);
         const dates = selectedDays.map((i) => start.add(i, 'day').format('YYYY-MM-DD'));
-        // const group_id = uuidv4(); // تغيير نوع المعرف 
-        const group_id = crypto.randomUUID();
+        const group_id = uuidv4(); // تغيير نوع المعرف 
 
         const inserts = dates.map((date) => ({ student_id: studentId, date, group_id }));
         const { error } = await supabase.from('ride_requests').insert(inserts);
