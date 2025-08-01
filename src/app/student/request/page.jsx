@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-import { BookAlert, DollarSign, Clock4, RotateCcw, Calendar, ChevronRight, CheckCircle } from 'lucide-react';
+import { BookAlert, DollarSign, Clock4, RotateCcw, Calendar, ChevronRight, CheckCircle, X } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useRideRequestStore } from '@/store/rideRequestStore';
 import { v4 as uuidv4 } from 'uuid';
