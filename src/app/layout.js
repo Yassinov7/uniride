@@ -10,20 +10,33 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* Manifest and theme */}
-        <link rel="manifest" href="/webmanifest.json" />
+        {/* <!-- Basic Info --> */}
+        <title>UniRide</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="description" content="نظام ذكي لتنظيم نقل الطلاب بين الجامعة والبيت" />
         <meta name="theme-color" content="#2563eb" />
         <meta name="background-color" content="#eff6ff" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="نظام ذكي لتنظيم نقل الطلاب بين الجامعة والبيت" />
+        <meta name="apple-mobile-web-app-title" content="UniRide" />
+        <meta name="application-name" content="UniRide" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="mobile-web-app-capable" content="yes" />
 
-        {/* Favicons */}
+        {/* <!-- PWA Manifest --> */}
+        <link rel="manifest" href="/webmanifest.json" />
+
+        {/* <!-- Favicons --> */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="shortcut icon" href="/favicon.ico" />
-        <title>UniRide</title>
+
+        {/* <!-- Windows Tiles --> */}
+        <meta name="msapplication-TileColor" content="#2563eb" />
+        <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
       </head>
+
 
       <body>
         <Toaster position="top-center" reverseOrder={false} />
