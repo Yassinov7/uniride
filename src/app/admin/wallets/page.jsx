@@ -46,6 +46,135 @@ export default function AdminWalletsPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    // const handleSubmit = async () => {
+    //     if (form.saving) return;
+
+    //     const { amount, description } = form;
+    //     const student = editingStudent;
+
+    //     if (!amount || isNaN(amount)) {
+    //         toast.error('يرجى إدخال مبلغ صالح');
+    //         return;
+    //     }
+
+    //     setForm((prev) => ({ ...prev, saving: true }));
+
+    //     try {
+    //         const numericAmount = parseFloat(amount);
+
+    //         const { data: current } = await supabase
+    //             .from('wallets')
+    //             .select('*')
+    //             .eq('student_id', student.id)
+    //             .single();
+
+    //         const newBalance = (current?.balance ?? 0) + numericAmount;
+
+    //         const { error: walletError } = await supabase.from('wallets').upsert({
+    //             student_id: student.id,
+    //             balance: newBalance,
+    //         });
+
+    //         if (walletError) {
+    //             toast.error('فشل تحديث الرصيد');
+    //             return;
+    //         }
+
+
+    //         await supabase.from('wallet_transactions').insert({
+    //             student_id: student.id,
+    //             amount: numericAmount,
+    //             description,
+    //             created_by: user?.id || null,
+    //         });
+
+    //         toast.success(numericAmount > 0 ? 'تمت الإضافة بنجاح ✅' : 'تم الخصم بنجاح ✅');
+    //         setEditingStudent(null);
+    //         setForm({ amount: '', description: '', saving: false });
+    //         await fetchStudents();
+    //     } catch (error) {
+    //         console.error('خطأ أثناء تعديل الرصيد:', error);
+    //         toast.error('حدث خطأ غير متوقع');
+    //     } finally {
+    //         setForm((prev) => ({ ...prev, saving: false }));
+    //     }
+    // };
+    // const handleSubmit = async () => {
+    //     if (form.saving) return;
+
+    //     const { amount, description } = form;
+    //     const student = editingStudent;
+
+    //     if (!amount || isNaN(amount)) {
+    //         toast.error('يرجى إدخال مبلغ صالح');
+    //         return;
+    //     }
+
+    //     const numericAmount = parseFloat(amount);
+
+    //     setForm((prev) => ({ ...prev, saving: true }));
+    //     toast.loading('جاري تنفيذ العملية...');
+
+    //     try {
+    //         // ✅ جلب الرصيد الحالي للمحفظة
+    //         const { data: wallet, error: selectError } = await supabase
+    //             .from('wallets')
+    //             .select('id, balance')
+    //             .eq('student_id', student.id)
+    //             .single();
+
+    //             console.log('error :  ', selectError);
+    //             console.log('wallet :  ', wallet);
+    //         if (selectError || !wallet) {
+    //             toast.dismiss();
+    //             toast.error('فشل في جلب بيانات المحفظة');
+    //             return;
+    //         }
+
+    //         const newBalance = wallet.balance + numericAmount;
+
+    //         // ✅ تحديث الرصيد مباشرة
+    //         const { error: updateError } = await supabase
+    //             .from('wallets')
+    //             .update({ balance: newBalance })
+    //             .eq('id', wallet.id);
+
+    //         if (updateError) {
+    //             toast.dismiss();
+    //             toast.error('فشل تعديل الرصيد');
+    //             return;
+    //         }
+
+    //         // ✅ تسجيل العملية في سجل المعاملات
+    //         const { error: logError } = await supabase.from('wallet_transactions').insert({
+    //             student_id: student.id,
+    //             amount: numericAmount,
+    //             description,
+    //             created_by: user?.id || null,
+    //         });
+
+    //         if (logError) {
+    //             toast.dismiss();
+    //             toast.error('تم تعديل الرصيد لكن فشل تسجيل العملية');
+    //             return;
+    //         }
+
+    //         toast.dismiss();
+    //         toast.success(numericAmount > 0 ? '✅ تمت الإضافة بنجاح' : '✅ تم الخصم بنجاح');
+
+    //         // ✅ إعادة ضبط النموذج وتحديث البيانات
+    //         setEditingStudent(null);
+    //         setForm({ amount: '', description: '', saving: false });
+    //         await fetchStudents();
+    //     } catch (error) {
+    //         console.error('خطأ أثناء تعديل الرصيد:', error);
+    //         toast.dismiss();
+    //         toast.error('حدث خطأ غير متوقع أثناء العملية');
+    //     } finally {
+    //         setForm((prev) => ({ ...prev, saving: false }));
+    //     }
+    // };
+
     const handleSubmit = async () => {
         if (form.saving) return;
 
@@ -57,44 +186,67 @@ export default function AdminWalletsPage() {
             return;
         }
 
+        const numericAmount = parseFloat(amount);
+
         setForm((prev) => ({ ...prev, saving: true }));
+        toast.loading('جاري تنفيذ العملية...');
 
         try {
-            const numericAmount = parseFloat(amount);
-
-            const { data: current } = await supabase
+            // ✅ جلب الرصيد الحالي للمحفظة
+            const { data: wallet, error: selectError } = await supabase
                 .from('wallets')
-                .select('*')
+                .select('student_id, balance')
                 .eq('student_id', student.id)
                 .single();
 
-            const newBalance = (current?.balance ?? 0) + numericAmount;
+            console.log('error:', selectError);
+            console.log('wallet:', wallet);
 
-            const { error: walletError } = await supabase.from('wallets').upsert({
-                student_id: student.id,
-                balance: newBalance,
-            });
-
-            if (walletError) {
-                toast.error('فشل تحديث الرصيد');
+            if (selectError || !wallet) {
+                toast.dismiss();
+                toast.error('فشل في جلب بيانات المحفظة');
                 return;
             }
 
+            const newBalance = wallet.balance + numericAmount;
 
-            await supabase.from('wallet_transactions').insert({
+            // ✅ تحديث الرصيد باستخدام student_id (بدلاً من id)
+            const { error: updateError } = await supabase
+                .from('wallets')
+                .update({ balance: newBalance })
+                .eq('student_id', student.id);
+
+            if (updateError) {
+                toast.dismiss();
+                toast.error('فشل تعديل الرصيد');
+                return;
+            }
+
+            // ✅ تسجيل العملية في سجل المعاملات
+            const { error: logError } = await supabase.from('wallet_transactions').insert({
                 student_id: student.id,
                 amount: numericAmount,
                 description,
                 created_by: user?.id || null,
             });
 
-            toast.success(numericAmount > 0 ? 'تمت الإضافة بنجاح ✅' : 'تم الخصم بنجاح ✅');
+            if (logError) {
+                toast.dismiss();
+                toast.error('تم تعديل الرصيد لكن فشل تسجيل العملية');
+                return;
+            }
+
+            toast.dismiss();
+            toast.success(numericAmount > 0 ? '✅ تمت الإضافة بنجاح' : '✅ تم الخصم بنجاح');
+
+            // ✅ إعادة ضبط النموذج وتحديث البيانات
             setEditingStudent(null);
             setForm({ amount: '', description: '', saving: false });
             await fetchStudents();
         } catch (error) {
             console.error('خطأ أثناء تعديل الرصيد:', error);
-            toast.error('حدث خطأ غير متوقع');
+            toast.dismiss();
+            toast.error('حدث خطأ غير متوقع أثناء العملية');
         } finally {
             setForm((prev) => ({ ...prev, saving: false }));
         }
