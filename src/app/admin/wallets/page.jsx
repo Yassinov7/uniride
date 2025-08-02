@@ -199,8 +199,8 @@ export default function AdminWalletsPage() {
                 .eq('student_id', student.id)
                 .single();
 
-            console.log('error:', selectError);
-            console.log('wallet:', wallet);
+            // console.log('error:', selectError);
+            // console.log('wallet:', wallet);
 
             if (selectError || !wallet) {
                 toast.dismiss();
