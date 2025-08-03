@@ -178,16 +178,16 @@ export default function NextBookingPage() {
                         {booking.ride_id.route_type === 'go' ? 'ذهاب' : 'عودة'}
                     </div>
 
-                    {showButton && (
+                    {/* {showButton && (
                         <button
                             onClick={handleConfirm}
                             className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
                         >
                             أنهيت دوامي ✅
                         </button>
-                    )}
-
-                    {confirmed && (
+                    )} */}
+                        {/* //زر انهاء الدوام والملاحظةظ */}
+                    {/* {showButton && confirmed && (
                         <div className="space-y-4">
                             <div className="flex justify-center gap-2 items-center text-green-600 font-semibold">
                                 <CheckCircle size={20} />
@@ -201,7 +201,7 @@ export default function NextBookingPage() {
                                 الانتقال إلى رحلة العودة
                             </button>
                         </div>
-                    )}
+                    )} */}
                 </div>
             ) : (
                 <p className="text-center text-gray-500">لا يوجد حجز قادم حالياً.</p>
