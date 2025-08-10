@@ -12,6 +12,7 @@ const useLogout = () => {
     if (isLoggingOut.current) return;
     isLoggingOut.current = true;
 
+    
     const toastId = toast.loading('جاري تسجيل الخروج...');
 
     try {
